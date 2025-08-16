@@ -64,7 +64,6 @@ namespace DiscordStatus
         public void OnConfigParsed(DSconfig config)
         {
             ConfigManager.GetPath(ModuleDirectory, ModuleName);
-            // A verificação 'config.Version == null' foi removida pois 'int' não pode ser nulo.
             if (config.Version < _g.Config.Version)
             {
                 DSLog.Log(2, $"Config version mismatch (Expected: {_g.Config.Version} | Current: {config.Version})");
@@ -79,8 +78,11 @@ namespace DiscordStatus
                 _g.WConfig = Config.WebhookConfig;
                 _g.EConfig = Config.EmbedConfig;
                 _g.NameFormat = _g.EConfig.NameFormat;
-                _g.HasCC = _g.EConfig.NameFormat.Contains("{CC}") || _g.EConfig.NameFormat.Contains("{FLAG}");
+                
+                // Força a desativação da busca de país, já que as flags foram removidas.
+                _g.HasCC = false;
                 _g.HasRC = _g.EConfig.NameFormat.Contains("{RC}");
+
                 _g.ServerIP = _g.GConfig.ServerIP;
                 DSLog.Log(1, "Finished loading config file");
             }

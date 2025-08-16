@@ -51,11 +51,13 @@ namespace DiscordStatus
         // }
         private void OnMapStart(string eventMapName)
         {
-            // Usar Server.MapName é mais confiável para obter o nome do mapa atual.
             var currentMapName = Server.MapName;
+            
+            // Reseta os nomes dos times no início de cada mapa.
+            _g.CTName = null;
+            _g.TName = null;
 
-            // Log para depuração, caso o problema persista.
-            DSLog.Log(0, $"OnMapStart triggered. Event map name: '{eventMapName}', Server.MapName: '{currentMapName}'.");
+            DSLog.Log(0, $"OnMapStart triggered. Server.MapName: '{currentMapName}'.");
 
             if (!init)
             {
@@ -68,7 +70,7 @@ namespace DiscordStatus
             else
             {
                 DSLog.Log(1, $"Map changed from {_g.MapName} to {currentMapName}!");
-                _g.MapName = currentMapName; // Atualiza o nome global do mapa
+                _g.MapName = currentMapName;
                 if (!_g.WConfig.NewMapNotification) return;
                 var playercounts = Utilities.GetPlayers().Where(_chores.IsPlayerValid).Count();
                 _webhook.NewMap(currentMapName, playercounts);

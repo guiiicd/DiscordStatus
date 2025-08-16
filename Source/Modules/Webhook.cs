@@ -234,9 +234,9 @@ namespace DiscordStatus
                 string ctTeamName = string.IsNullOrEmpty(_g.CTName) ? "Contra-Terroristas" : _g.CTName;
                 string tTeamName = string.IsNullOrEmpty(_g.TName) ? "Terroristas" : _g.TName;
 
-                // Cabeçalho da tabela do placar
-                string scoreboardHeader = "JOGADOR            K   A   D  PONTOS\n" +
-                                        "------------------ --- --- --- -----";
+                // Cabeçalho da tabela do placar sem a coluna de pontos
+                string scoreboardHeader = "JOGADOR            K   A   D\n" +
+                                          "------------------ --- --- ---";
 
                 string ctnames = !ctplayersName.Any() 
                     ? "```Nenhum jogador```" 
@@ -248,17 +248,16 @@ namespace DiscordStatus
 
                 var builder = new EmbedBuilder()
                     .WithTitle($"Fim de Partida `{_g.MapName}`")
-                    .WithDescription($"**Placar Final**\n{ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}")
+                    .WithDescription($"**Placar**\n{ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}")
                     .WithColor(_chores.GetEmbedColor())
                     .WithTimestamp(DateTimeOffset.UtcNow);
 
                 builder.AddField("👑 MVP da Partida", mvp, false);
                 
-                // Adiciona os placares dos times em campos separados para melhor visualização
-                builder.AddField($"{ctTeamName} (Vencedores)", ctnames, false);
+                builder.AddField($"{ctTeamName}", ctnames, false);
                 builder.AddField($"{tTeamName}", tnames, false);
 
-                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"`connect {_g.ServerIP}`";
+                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}```";
                 builder.AddField("Servidor", connectInfo, false);
 
                 if (_chores.IsURLValid(EConfig.MapImg))

@@ -13,6 +13,7 @@ namespace DiscordStatus
         private readonly TimeSpan _globalCooldownDuration = TimeSpan.FromSeconds(60);
 
         [ConsoleCommand("css_request", "Request players from discord")]
+        [ConsoleCommand("css_need", "Request players from discord")]
         public async void RequestPlayers(CCSPlayerController? player, CommandInfo command)
         {
             // A verificação `_chores.IsPlayerValid(player)` já garante que `player` não é nulo.

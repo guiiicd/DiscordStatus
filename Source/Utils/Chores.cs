@@ -32,16 +32,18 @@ namespace DiscordStatus
             nameBuilder.Replace("{KD}", playerinfo.KD);
             nameBuilder.Replace("{CLAN}", playerinfo.Clan ?? "");
             nameBuilder.Replace("{CC}", playerinfo.Country ?? "");
-            nameBuilder.Replace("{FLAG}", $":flag_{playerinfo.Country?.ToLower()}:");
             nameBuilder.Replace("{RC}", playerinfo.Region ?? "");
             
-            var formattedName = nameBuilder.ToString().Replace(" - ", " / ");
+            // Remove o placeholder de flag, caso ainda exista no formato do usuário.
+            nameBuilder.Replace("{FLAG}", "");
+
+            var formattedName = nameBuilder.ToString().Replace(" - ", "/");
 
             if (EConfig.EmbedSteamLink)
             {
                 formattedName = $"[{formattedName}](https://steamcommunity.com/profiles/{playerinfo.SteamId})";
             }
-            return formattedName;
+            return formattedName.Trim();
         }
 
         public string FormatStatsForScoreboard(PlayerInfo playerinfo)
@@ -54,9 +56,8 @@ namespace DiscordStatus
             string killsPadded = (playerinfo.Kills?.ToString() ?? "0").PadLeft(3);
             string assistsPadded = (playerinfo.Assists?.ToString() ?? "0").PadLeft(3);
             string deathsPadded = (playerinfo.Deaths?.ToString() ?? "0").PadLeft(3);
-            string scorePadded = (playerinfo.Score?.ToString() ?? "0").PadLeft(5);
 
-            return $"{namePadded} {killsPadded} {assistsPadded} {deathsPadded} {scorePadded}";
+            return $"{namePadded} {killsPadded} {assistsPadded} {deathsPadded}";
         }
 
         public Color GetEmbedColor()
@@ -108,10 +109,7 @@ namespace DiscordStatus
             {
                 Task.Run(async () => playerInfo.Region = await _query.IPQueryAsync(playerInfo.IpAddress ?? "", "region_code").ConfigureAwait(false) ?? string.Empty);
             }
-            if (_g.HasCC)
-            {
-                Task.Run(async () => playerInfo.Country = await _query.GetCountryCodeAsync(playerInfo.IpAddress ?? "").ConfigureAwait(false) ?? string.Empty);
-            }
+            // A chamada para buscar o país foi removida.
             _g.PlayerList[player.Slot] = playerInfo;
         }
 
@@ -135,19 +133,16 @@ namespace DiscordStatus
 
         public void UpdatePlayer(CCSPlayerController updatedPlayer)
         {
-            // Usamos o operador '?' para acessar MatchStats de forma segura.
             var matchStats = updatedPlayer.ActionTrackingServices?.MatchStats;
             var kills = matchStats?.Kills ?? 0;
             var deaths = matchStats?.Deaths ?? 0;
             var assists = matchStats?.Assists ?? 0;
-            var score = updatedPlayer.Score;
             var clan = updatedPlayer.Clan ?? "";
             var TeamID = updatedPlayer.TeamNum;
             string kdRatio = deaths != 0 ? (kills / (double)deaths).ToString("G2") : kills.ToString();
             
             if (_g.PlayerList.TryGetValue(updatedPlayer.Slot, out var existingPlayer))
             {
-                existingPlayer.Score = score;
                 existingPlayer.Kills = kills;
                 existingPlayer.Deaths = deaths;
                 existingPlayer.Assists = assists;
