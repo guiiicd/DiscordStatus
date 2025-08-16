@@ -21,18 +21,18 @@ namespace DiscordStatus
             {
                 if (IsGlobalCooldownActive())
                 {
-                    DSLog.LogToChat(player, "{RED}Command is on global cooldown. Please wait.");
+                    DSLog.LogToChat(player, "{RED}Já estamos chamando um complete, por favor aguarde");
                     return;
                 }
                 // Como IsPlayerValid é true, podemos acessar PlayerName com segurança.
                 await _webhook.RequestPlayers(player!.PlayerName);
                 SetGlobalCooldown();
-                DSLog.LogToChat(player, "{GREEN}Request Sent");
+                DSLog.LogToChat(player, "{GREEN}Estamos chamando um complete");
             }
             else
             {
                 await _webhook.RequestPlayers("Admin");
-                DSLog.Log(1, $"Request sent");
+                DSLog.Log(1, $"Estamos chamando um complete");
             }
         }
 

@@ -10,9 +10,9 @@ internal static class DSLog
     {
         switch (purpose)
         {
-            case 0: LogToConsole(ConsoleColor.Magenta, "[Discord Status] -> " + message); break;
-            case 1: LogToConsole(ConsoleColor.Green, "[Discord Status] -> " + message); break;
-            case 2: LogToConsole(ConsoleColor.Red, "[Discord Status] -> " + message); break;
+            case 0: LogToConsole(ConsoleColor.Magenta, "[THE OWLS] -> " + message); break;
+            case 1: LogToConsole(ConsoleColor.Green, "[THE OWLS] -> " + message); break;
+            case 2: LogToConsole(ConsoleColor.Red, "[THE OWLS] -> " + message); break;
         }
     }
 
@@ -25,13 +25,13 @@ internal static class DSLog
 
     internal static void LogToChat(CCSPlayerController? player, string messageToLog)
     {
-        messageToLog = ReplaceTags($"{ChatColors.Red}[Discord Status]: " + messageToLog);
+        messageToLog = ReplaceTags($"{ChatColors.Red}[THE OWLS] " + messageToLog);
         Server.NextFrame(() => player?.PrintToChat(messageToLog));
     }
 
     internal static void LogToChatAll(string messageToLog)
     {
-        messageToLog = ReplaceTags($"{ChatColors.Red}[Discord Status]: " + messageToLog);
+        messageToLog = ReplaceTags($"{ChatColors.Red}[THE OWLS] " + messageToLog);
         Server.NextFrame(() => Server.PrintToChatAll(messageToLog));
     }
 
