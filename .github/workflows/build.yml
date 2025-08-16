@@ -1,0 +1,75 @@
+# Nome do Workflow que aparecerá na aba "Actions" do GitHub
+name: Build and Release
+
+# Gatilhos: Este workflow será executado automaticamente quando houver um push na branch 'main'
+# ou pode ser iniciado manualmente (workflow_dispatch).
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Permissões necessárias para que a Action possa criar uma Release no repositório.
+    permissions:
+        contents: write
+    name: Build and Release
+    # O workflow será executado em uma máquina virtual Ubuntu (padrão do GitHub).
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Faz o checkout do código do seu repositório para a máquina virtual.
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Configura o ambiente .NET. A versão pode ser ajustada se necessário.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0'
+
+      # 3. Extrai a versão do plugin diretamente do arquivo Manifests.cs.
+      # Isso evita que você tenha que atualizar a versão manualmente no workflow.
+      - name: Get Plugin Version
+        id: PLUGIN_VERSION
+        run: |
+            PLUGIN_VERSION=$(grep -oP 'ModuleVersion\s*=>\s*"\K[^"]*' Source/Manifests.cs)
+            echo "PLUGIN_VERSION=$PLUGIN_VERSION" >> $GITHUB_ENV
+            echo "Versão detectada: $PLUGIN_VERSION"
+
+      # 4. Compila o projeto em modo Release.
+      - name: Build Plugin
+        run: dotnet publish ./Source/DiscordStatus.csproj --configuration Release --output ./release/addons/counterstrikesharp/plugins/DiscordStatus
+
+      # 5. Prepara e empacota os arquivos para a Release.
+      - name: Package Release Files
+        run: |
+          # Entra no diretório de release para criar o zip com a estrutura de pastas correta.
+          cd release
+          zip -r ../DiscordStatus-${{ env.PLUGIN_VERSION }}.zip .
+
+      # 6. Cria a Release no GitHub.
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # O nome da Release será, por exemplo, "DiscordStatus v3.2"
+          name: DiscordStatus ${{ env.PLUGIN_VERSION }}
+          # A tag será a própria versão, ex: "v3.2"
+          tag_name: ${{ env.PLUGIN_VERSION }}
+          # Corpo/descrição da Release. Você pode personalizar esta mensagem.
+          body: |
+            Release automática do plugin DiscordStatus.
+            
+            ### Instalação
+            1. Baixe o arquivo `DiscordStatus-${{ env.PLUGIN_VERSION }}.zip`.
+            2. Extraia o conteúdo na pasta `csgo/` do seu servidor.
+            3. Reinicie o servidor ou carregue o plugin manualmente.
+          # Define que não é um rascunho (draft) nem um pré-lançamento (prerelease).
+          draft: false
+          prerelease: false
+          # Anexa o arquivo .zip que foi criado no passo anterior.
+          files: |
+            DiscordStatus-${{ env.PLUGIN_VERSION }}.zip
