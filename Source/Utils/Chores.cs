@@ -57,6 +57,20 @@ namespace DiscordStatus
             }
         }
 
+        // public void GetScore(IEnumerable<CCSTeam> Teams)
+        // {
+        //     foreach (var team in Teams)
+        //     {
+        //         if (team.TeamNum == 2)
+        //         {
+        //             _g.TScore = team.Score;
+        //         }
+        //         else if (team.TeamNum == 3)
+        //         {
+        //             _g.CTScore = team.Score;
+        //         }
+        //     }
+        // }
         public void GetScore(IEnumerable<CCSTeam> Teams)
         {
             foreach (var team in Teams)
@@ -64,10 +78,12 @@ namespace DiscordStatus
                 if (team.TeamNum == 2)
                 {
                     _g.TScore = team.Score;
+                    _g.TName = team.ClanTeamname;
                 }
                 else if (team.TeamNum == 3)
                 {
                     _g.CTScore = team.Score;
+                    _g.CTName = team.ClanTeamname;
                 }
             }
         }

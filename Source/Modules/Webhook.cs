@@ -233,6 +233,55 @@ namespace DiscordStatus
         }
 
         // 2. NOVO LAYOUT PARA O PLACAR DE FIM DE PARTIDA
+        // public async Task GameEnd(string mvp, List<string> tplayersName, List<string> ctplayersName)
+        // {
+        //     List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.ScoreboardURL);
+        //     foreach (DiscordWebhookClient webhookClient in webhookClients)
+        //     {
+        //         if (webhookClient == null)
+        //         {
+        //             continue;
+        //         }
+
+        //         if (tplayersName.Any() || ctplayersName.Any())
+        //         {
+        //             string tnames = !tplayersName.Any() ? "Nenhum jogador" : string.Join("\n", tplayersName);
+        //             string ctnames = !ctplayersName.Any() ? "Nenhum jogador" : string.Join("\n", ctplayersName);
+
+        //             var builder = new EmbedBuilder()
+        //                 .WithTitle($"Fim de Partida em {_g.MapName}")
+        //                 .WithDescription($"**Placar Final:** CT **{_g.CTScore}** vs **{_g.TScore}** T")
+        //                 .WithColor(_chores.GetEmbedColor())
+        //                 .WithTimestamp(DateTimeOffset.UtcNow);
+
+        //             builder.AddField("👑 MVP da Partida", mvp, false);
+        //             builder.AddField($"🛡️ Contra-Terroristas ({_g.CTScore})", ctnames, true);
+        //             builder.AddField($"💣 Terroristas ({_g.TScore})", tnames, true);
+        //             builder.AddField("\u200B", "\u200B", false); // Campo em branco para espaçamento
+
+        //             string connectInfo = _chores.IsURLValid(GConfig.PHPURL)
+        //                 ? $"[Conectar via Steam]({_g.ConnectURL})"
+        //                 : $"`connect {_g.ServerIP}`";
+        //             builder.AddField("Servidor", connectInfo, false);
+
+        //             if (_chores.IsURLValid(EConfig.MapImg))
+        //             {
+        //                 builder.WithImageUrl(EConfig.MapImg.Replace("{MAPNAME}", _g.MapName));
+        //             }
+
+        //             builder.WithFooter($"Jogadores na partida: {tplayersName.Count + ctplayersName.Count}/{_g.MaxPlayers}");
+
+        //             using (webhookClient)
+        //             {
+        //                 await webhookClient.SendMessageAsync(
+        //                     embeds: new[] { builder.Build() },
+        //                     username: WebhookUsername,
+        //                     avatarUrl: WebhookAvatarUrl
+        //                 );
+        //             }
+        //         }
+        //     }
+        // }
         public async Task GameEnd(string mvp, List<string> tplayersName, List<string> ctplayersName)
         {
             List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.ScoreboardURL);
@@ -248,15 +297,19 @@ namespace DiscordStatus
                     string tnames = !tplayersName.Any() ? "Nenhum jogador" : string.Join("\n", tplayersName);
                     string ctnames = !ctplayersName.Any() ? "Nenhum jogador" : string.Join("\n", ctplayersName);
 
+                    // Usa os nomes das equipes (ou um padrão se estiverem vazios)
+                    string ctTeamName = string.IsNullOrEmpty(_g.CTName) ? "Contra-Terroristas" : _g.CTName;
+                    string tTeamName = string.IsNullOrEmpty(_g.TName) ? "Terroristas" : _g.TName;
+
                     var builder = new EmbedBuilder()
-                        .WithTitle($"Fim de Partida em {_g.MapName}")
-                        .WithDescription($"**Placar Final:** CT **{_g.CTScore}** vs **{_g.TScore}** T")
+                        .WithTitle($"Fim de Partida `{_g.MapName}`")
+                        .WithDescription($"**Placar Final**\n {ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}")
                         .WithColor(_chores.GetEmbedColor())
-                        .WithTimestamp(DateTimeOffset.UtcNow);
+                        .WithTimestamp(DateTimeOffset.UtcNow); // Define o rodapé apenas com o horário
 
                     builder.AddField("👑 MVP da Partida", mvp, false);
-                    builder.AddField($"🛡️ Contra-Terroristas ({_g.CTScore})", ctnames, true);
-                    builder.AddField($"💣 Terroristas ({_g.TScore})", tnames, true);
+                    builder.AddField($"{ctTeamName} ({_g.CTScore})", ctnames, true);
+                    builder.AddField($"{tTeamName} ({_g.TScore})", tnames, true);
                     builder.AddField("\u200B", "\u200B", false); // Campo em branco para espaçamento
 
                     string connectInfo = _chores.IsURLValid(GConfig.PHPURL)
@@ -268,8 +321,9 @@ namespace DiscordStatus
                     {
                         builder.WithImageUrl(EConfig.MapImg.Replace("{MAPNAME}", _g.MapName));
                     }
-
-                    builder.WithFooter($"Jogadores na partida: {tplayersName.Count + ctplayersName.Count}/{_g.MaxPlayers}");
+                    
+                    // O rodapé agora só mostra o timestamp (horário)
+                    // A linha .WithFooter() foi removida e .WithTimestamp() já cuida disso.
 
                     using (webhookClient)
                     {
