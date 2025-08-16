@@ -130,11 +130,11 @@ namespace DiscordStatus
             }
             else
             {
-                builder.WithDescription($"**Mapa:** `{_g.MapName}`\n\nO servidor está aguardando jogadores!");
-                builder.AddField("Jogadores Online", "Nenhum jogador conectado.", false);
+                builder.WithDescription($"**Mapa:** `{_g.MapName}`\n");
+                builder.AddField("Jogadores", "Nenhum jogador conectado.", false);
             }
 
-            string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"`connect {_g.ServerIP}`";
+            string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}```";
             builder.AddField("Servidor", connectInfo, false);
             return builder.Build();
         }
@@ -151,9 +151,9 @@ namespace DiscordStatus
                     .WithTimestamp(DateTimeOffset.UtcNow);
 
                 builder.AddField("Mapa Atual", $"`{_g.MapName}`", true);
-                builder.AddField("Jogadores Online", $"`{_g.PlayerList.Count}/{_g.MaxPlayers}`", true);
+                builder.AddField("Jogadores", $"`{_g.PlayerList.Count}/{_g.MaxPlayers}`", true);
 
-                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"`connect {_g.ServerIP}`";
+                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}```";
                 builder.AddField("Entre no Servidor", connectInfo, false);
 
                 string content = (WConfig.NotifyMembersRoleID != 0) ? $"<@&{WConfig.NotifyMembersRoleID}>" : "";
@@ -181,8 +181,8 @@ namespace DiscordStatus
                     builder.WithImageUrl(EConfig.MapImg.Replace("{MAPNAME}", mapname));
                 }
                 
-                builder.AddField("Jogadores Online", $"`{counts}/{_g.MaxPlayers}`", false);
-                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"`connect {_g.ServerIP}`";
+                builder.AddField("Jogadores", $"`{counts}/{_g.MaxPlayers}`", false);
+                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}```";
                 builder.AddField("Junte-se a Nós!", connectInfo, false);
 
                 await webhookClient.SendMessageAsync(
@@ -203,7 +203,7 @@ namespace DiscordStatus
                 string tTeamName = string.IsNullOrEmpty(_g.TName) ? "Terroristas" : _g.TName;
 
                 var builder = new EmbedBuilder()
-                    .WithTitle($"Fim de Partida em `{_g.MapName}`")
+                    .WithTitle($"Fim de Partida `{_g.MapName}`")
                     .WithDescription($"**Placar**\n {ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}")
                     .WithColor(_chores.GetEmbedColor())
                     .WithTimestamp(DateTimeOffset.UtcNow);
@@ -212,7 +212,7 @@ namespace DiscordStatus
                 builder.AddField(ctTeamName, ctnames, true);
                 builder.AddField(tTeamName, tnames, true);
 
-                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"`connect {_g.ServerIP}`";
+                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}````";
                 builder.AddField("Servidor", connectInfo, false);
 
                 if (_chores.IsURLValid(EConfig.MapImg))
