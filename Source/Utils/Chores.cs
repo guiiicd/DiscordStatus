@@ -4,6 +4,9 @@ using System.Text.RegularExpressions;
 using CounterStrikeSharp.API.Core;
 using Discord;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DiscordStatus
 {
@@ -19,7 +22,6 @@ namespace DiscordStatus
             _query = query;
         }
 
-        // Formatador para o status em tempo real (agora usa /)
         public string FormatStats(PlayerInfo playerinfo)
         {
             var nameBuilder = new StringBuilder(_g.NameFormat);
@@ -33,7 +35,6 @@ namespace DiscordStatus
             nameBuilder.Replace("{FLAG}", $":flag_{playerinfo.Country?.ToLower()}:");
             nameBuilder.Replace("{RC}", playerinfo.Region ?? "");
             
-            // Substitui o separador para usar a barra
             var formattedName = nameBuilder.ToString().Replace(" - ", " / ");
 
             if (EConfig.EmbedSteamLink)
@@ -43,7 +44,6 @@ namespace DiscordStatus
             return formattedName;
         }
 
-        // NOVO formatador para o placar de fim de partida
         public string FormatStatsForScoreboard(PlayerInfo playerinfo)
         {
             const int nameWidth = 16;
@@ -135,17 +135,19 @@ namespace DiscordStatus
 
         public void UpdatePlayer(CCSPlayerController updatedPlayer)
         {
-            var kills = updatedPlayer.ActionTrackingServices?.MatchStats.Kills ?? 0;
-            var deaths = updatedPlayer.ActionTrackingServices?.MatchStats.Deaths ?? 0;
-            var assists = updatedPlayer.ActionTrackingServices?.MatchStats.Assists ?? 0;
-            var score = updatedPlayer.Score; // <-- CAPTURA A PONTUAÇÃO
+            // Usamos o operador '?' para acessar MatchStats de forma segura.
+            var matchStats = updatedPlayer.ActionTrackingServices?.MatchStats;
+            var kills = matchStats?.Kills ?? 0;
+            var deaths = matchStats?.Deaths ?? 0;
+            var assists = matchStats?.Assists ?? 0;
+            var score = updatedPlayer.Score;
             var clan = updatedPlayer.Clan ?? "";
             var TeamID = updatedPlayer.TeamNum;
             string kdRatio = deaths != 0 ? (kills / (double)deaths).ToString("G2") : kills.ToString();
             
             if (_g.PlayerList.TryGetValue(updatedPlayer.Slot, out var existingPlayer))
             {
-                existingPlayer.Score = score; // <-- ATUALIZA A PONTUAÇÃO
+                existingPlayer.Score = score;
                 existingPlayer.Kills = kills;
                 existingPlayer.Deaths = deaths;
                 existingPlayer.Assists = assists;
