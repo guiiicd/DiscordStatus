@@ -30,25 +30,52 @@ namespace DiscordStatus
             //RegisterEventHandler<EventGameNewmap>(OnGameNewmap); somehow this doesnt work
         }
 
-        private void OnMapStart(string mapName)
+        // private void OnMapStart(string mapName)
+        // {
+        //     if (!init)
+        //     {
+        //         DSLog.Log(1, $"Map {mapName} started!");
+        //         _g.MapName = mapName;
+        //         _g.MaxPlayers = Server.MaxPlayers;
+        //         Task.Run(LoadDiscordStatusAsync);
+        //         init = true;
+        //     }
+        //     else
+        //     {
+        //         DSLog.Log(1, $"Map {_g.MapName} changed to {mapName}!");
+        //         if (!_g.WConfig.NewMapNotification) return;
+        //         var playercounts = Utilities.GetPlayers().Where(_chores.IsPlayerValid).Count();
+        //         _webhook.NewMap(mapName, playercounts);
+        //         _g.MapName = mapName;
+        //     }
+        // }
+        private void OnMapStart(string eventMapName)
         {
+            // Usar Server.MapName é mais confiável para obter o nome do mapa atual.
+            var currentMapName = Server.MapName;
+
+            // Log para depuração, caso o problema persista.
+            DSLog.Log(0, $"OnMapStart triggered. Event map name: '{eventMapName}', Server.MapName: '{currentMapName}'.");
+
             if (!init)
             {
-                DSLog.Log(1, $"Map {mapName} started!");
-                _g.MapName = mapName;
+                DSLog.Log(1, $"Map {currentMapName} started!");
+                _g.MapName = currentMapName;
                 _g.MaxPlayers = Server.MaxPlayers;
                 Task.Run(LoadDiscordStatusAsync);
                 init = true;
             }
             else
             {
-                DSLog.Log(1, $"Map {_g.MapName} changed to {mapName}!");
+                DSLog.Log(1, $"Map changed from {_g.MapName} to {currentMapName}!");
+                _g.MapName = currentMapName; // Atualiza o nome global do mapa
                 if (!_g.WConfig.NewMapNotification) return;
                 var playercounts = Utilities.GetPlayers().Where(_chores.IsPlayerValid).Count();
-                _webhook.NewMap(mapName, playercounts);
-                _g.MapName = mapName;
+                _webhook.NewMap(currentMapName, playercounts);
             }
         }
+
+
 
         /*private HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
         {

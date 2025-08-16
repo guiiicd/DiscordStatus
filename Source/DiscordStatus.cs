@@ -96,12 +96,50 @@ namespace DiscordStatus
             }
         }
 
+        // public async Task UpdateAsync()
+        // {
+        //     await Task.Run(() =>
+        //     {
+        //         Server.NextFrame(() =>
+        //         {
+        //             var _players = Utilities.GetPlayers().Where(p => _chores.IsPlayerValid(p));
+        //             foreach (var player in _players)
+        //             {
+        //                 _chores.UpdatePlayer(player);
+        //             }
+
+        //             var players = _g.PlayerList;
+
+        //             if (players.Count > 0)
+        //             {
+        //                 _chores.SortPlayers();
+
+        //                 var tPlayerList = players
+        //                     .Where(kv => kv.Value != null && kv.Value.TeamID == 2)
+        //                     .Select(kv => _chores.FormatStats(kv.Value));
+
+        //                 var ctPlayerList = players
+        //                     .Where(kv => kv.Value != null && kv.Value.TeamID == 3)
+        //                     .Select(kv => _chores.FormatStats(kv.Value));
+
+        //                 _g.TPlayersName.AddRange(tPlayerList);
+        //                 _g.CtPlayersName.AddRange(ctPlayerList);
+        //             }
+        //         });
+        //     });
+
+        //     await _webhook.UpdateEmbed();
+        // }
+
         public async Task UpdateAsync()
         {
             await Task.Run(() =>
             {
                 Server.NextFrame(() =>
                 {
+                    // Adiciona a atualização constante do nome do mapa para garantir que esteja sempre correto.
+                    _g.MapName = Server.MapName;
+
                     var _players = Utilities.GetPlayers().Where(p => _chores.IsPlayerValid(p));
                     foreach (var player in _players)
                     {
@@ -130,5 +168,6 @@ namespace DiscordStatus
 
             await _webhook.UpdateEmbed();
         }
+
     }
 }

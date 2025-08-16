@@ -122,54 +122,107 @@ namespace DiscordStatus
             }
         }
 
+        // public Embed CreateStatusEmbed()
+        // {
+        //     List<string> tplayersName = _g.TPlayersName;
+        //     List<string> ctplayersName = _g.CtPlayersName;
+        //     string tnames;
+        //     string ctnames;
+
+        //     if (_g.PlayerList.Count > 0)
+        //     {
+        //         if (_g.HasCC)
+        //         {
+        //             tnames = !tplayersName.Any() ? "ㅤ" : string.Join("\n", tplayersName);
+        //             ctnames = !ctplayersName.Any() ? "ㅤ" : string.Join("\n", ctplayersName);
+        //         }
+        //         else
+        //         {
+        //             ctnames = !ctplayersName.Any() ? "```ㅤ```" : $"```ansi\r\n\u001b[0;34m{string.Join("\n", ctplayersName)}\u001b[0m\r\n```";
+        //             tnames = !tplayersName.Any() ? "```ㅤ```" : $"```ansi\r\n\u001b[0;33m{string.Join("\n", tplayersName)}\u001b[0m\r\n```";
+        //         }
+        //         EmbedBuilder builder = new EmbedBuilder()
+        //             .WithTitle(EConfig.Title)
+        //             .AddField($"{EConfig.MapField}", $"```ansi\r\n\u001b[2;31m{_g.MapName}\u001b[0m\r\n```", inline: true)
+        //             .AddField(EConfig.OnlineField, $"```ansi\r\n\u001b[2;31m{_g.PlayerList.Count}\u001b[0m/\u001b[2;32m{_g.MaxPlayers}\u001b[0m\r\n```", inline: true);
+        //         _ = EConfig.PlayersInline ? builder.AddField("ㅤ", "​─────────────────────────────────────") : null;
+        //         _ = builder
+        //             .AddField(EConfig.CTField.Replace("{SCORE}", _g.CTScore.ToString()), ctnames, inline: EConfig.PlayersInline)
+        //             .AddField(EConfig.TField.Replace("{SCORE}", _g.TScore.ToString()), tnames, inline: EConfig.PlayersInline)
+        //             .AddField("ㅤ", _chores.IsURLValid(GConfig.PHPURL) ? $"[**`connect {_g.ServerIP}`**]({_g.ConnectURL})ㅤ{EConfig.JoinHere}" : $"**`connect {_g.ServerIP}`**ㅤ{EConfig.JoinHere}")
+        //             .WithColor(_chores.GetEmbedColor())
+        //             .WithCurrentTimestamp();
+        //         _ = _chores.IsURLValid(_g.ConnectURL) ? builder.WithUrl(_g.ConnectURL) : null;
+        //         _ = _chores.IsURLValid(EConfig.MapImg) ? builder.WithImageUrl(EConfig.MapImg.Replace("{MAPNAME}", _g.MapName)) : null;
+        //         return builder.Build();
+        //     }
+        //     else
+        //     {
+        //         EmbedBuilder builder = new EmbedBuilder()
+        //             .WithTitle(EConfig.Title)
+        //             .AddField(EConfig.MapField, $"```ansi\r\n\u001b[2;31m{_g.MapName}\u001b[0m\r\n```", inline: true)
+        //             .AddField(EConfig.OnlineField, $"```ansi\n [2;33m [2;31m{EConfig.ServerEmpty} [0m [2;33m [0m [2;33m [0m\n```", inline: true)
+        //             .AddField("ㅤ", _chores.IsURLValid(GConfig.PHPURL) ? $"[**`connect {_g.ServerIP}`**]( {_g.ConnectURL})ㅤ{EConfig.JoinHere}" : $"**`connect {_g.ServerIP}`**ㅤ{EConfig.JoinHere}")
+        //             .WithColor(_chores.GetEmbedColor())
+        //             .WithCurrentTimestamp();
+        //         _ = _chores.IsURLValid(_g.ConnectURL) ? builder.WithUrl(_g.ConnectURL) : null;
+        //         _ = _chores.IsURLValid(EConfig.IdleImg) ? builder.WithImageUrl(EConfig.IdleImg.Replace("{MAPNAME}", _g.MapName)) : null;
+        //         return builder.Build();
+        //     }
+        // }
         public Embed CreateStatusEmbed()
         {
-            List<string> tplayersName = _g.TPlayersName;
-            List<string> ctplayersName = _g.CtPlayersName;
-            string tnames;
-            string ctnames;
+            // Usa os nomes das equipes (ou um padrão se estiverem vazios)
+            string ctTeamName = string.IsNullOrEmpty(_g.CTName) ? "Contra-Terroristas" : _g.CTName;
+            string tTeamName = string.IsNullOrEmpty(_g.TName) ? "Terroristas" : _g.TName;
 
-            if (_g.PlayerList.Count > 0)
+            var builder = new EmbedBuilder()
+                .WithTitle("THE OWLS - PLACAR") // Título padrão para o status
+                .WithColor(_chores.GetEmbedColor())
+                .WithTimestamp(DateTimeOffset.UtcNow);
+
+            // Adiciona a imagem do mapa se a URL for válida
+            if (_chores.IsURLValid(EConfig.MapImg))
             {
-                if (_g.HasCC)
-                {
-                    tnames = !tplayersName.Any() ? "ㅤ" : string.Join("\n", tplayersName);
-                    ctnames = !ctplayersName.Any() ? "ㅤ" : string.Join("\n", ctplayersName);
+                // Se não houver jogadores, usa a IdleImg (se configurada), senão a MapImg
+                string imageUrl = EConfig.MapImg.Replace("{MAPNAME}", _g.MapName);
+                if (!_g.PlayerList.Any() && _chores.IsURLValid(EConfig.IdleImg)) {
+                    imageUrl = EConfig.IdleImg;
                 }
-                else
-                {
-                    ctnames = !ctplayersName.Any() ? "```ㅤ```" : $"```ansi\r\n\u001b[0;34m{string.Join("\n", ctplayersName)}\u001b[0m\r\n```";
-                    tnames = !tplayersName.Any() ? "```ㅤ```" : $"```ansi\r\n\u001b[0;33m{string.Join("\n", tplayersName)}\u001b[0m\r\n```";
-                }
-                EmbedBuilder builder = new EmbedBuilder()
-                    .WithTitle(EConfig.Title)
-                    .AddField($"{EConfig.MapField}", $"```ansi\r\n\u001b[2;31m{_g.MapName}\u001b[0m\r\n```", inline: true)
-                    .AddField(EConfig.OnlineField, $"```ansi\r\n\u001b[2;31m{_g.PlayerList.Count}\u001b[0m/\u001b[2;32m{_g.MaxPlayers}\u001b[0m\r\n```", inline: true);
-                _ = EConfig.PlayersInline ? builder.AddField("ㅤ", "​─────────────────────────────────────") : null;
-                _ = builder
-                    .AddField(EConfig.CTField.Replace("{SCORE}", _g.CTScore.ToString()), ctnames, inline: EConfig.PlayersInline)
-                    .AddField(EConfig.TField.Replace("{SCORE}", _g.TScore.ToString()), tnames, inline: EConfig.PlayersInline)
-                    .AddField("ㅤ", _chores.IsURLValid(GConfig.PHPURL) ? $"[**`connect {_g.ServerIP}`**]({_g.ConnectURL})ㅤ{EConfig.JoinHere}" : $"**`connect {_g.ServerIP}`**ㅤ{EConfig.JoinHere}")
-                    .WithColor(_chores.GetEmbedColor())
-                    .WithCurrentTimestamp();
-                _ = _chores.IsURLValid(_g.ConnectURL) ? builder.WithUrl(_g.ConnectURL) : null;
-                _ = _chores.IsURLValid(EConfig.MapImg) ? builder.WithImageUrl(EConfig.MapImg.Replace("{MAPNAME}", _g.MapName)) : null;
-                return builder.Build();
+                builder.WithImageUrl(imageUrl);
             }
+
+            // Lógica para quando o servidor está COM jogadores
+            if (_g.PlayerList.Any())
+            {
+                List<string> tplayersName = _g.TPlayersName;
+                List<string> ctplayersName = _g.CtPlayersName;
+
+                string tnames = !tplayersName.Any() ? "Nenhum jogador" : string.Join("\n", tplayersName);
+                string ctnames = !ctplayersName.Any() ? "Nenhum jogador" : string.Join("\n", ctplayersName);
+
+                builder.WithDescription($"**Mapa:** `{_g.MapName}`\n**Placar:** {ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}");
+                
+                builder.AddField($"{ctTeamName}", ctnames, true);
+                builder.AddField($"{tTeamName}", tnames, true);
+                builder.AddField("\u200B", "\u200B", false); // Adiciona um espaçamento para organização
+            }
+            // Lógica para quando o servidor está VAZIO
             else
             {
-                EmbedBuilder builder = new EmbedBuilder()
-                    .WithTitle(EConfig.Title)
-                    .AddField(EConfig.MapField, $"```ansi\r\n\u001b[2;31m{_g.MapName}\u001b[0m\r\n```", inline: true)
-                    .AddField(EConfig.OnlineField, $"```ansi\n [2;33m [2;31m{EConfig.ServerEmpty} [0m [2;33m [0m [2;33m [0m\n```", inline: true)
-                    .AddField("ㅤ", _chores.IsURLValid(GConfig.PHPURL) ? $"[**`connect {_g.ServerIP}`**]( {_g.ConnectURL})ㅤ{EConfig.JoinHere}" : $"**`connect {_g.ServerIP}`**ㅤ{EConfig.JoinHere}")
-                    .WithColor(_chores.GetEmbedColor())
-                    .WithCurrentTimestamp();
-                _ = _chores.IsURLValid(_g.ConnectURL) ? builder.WithUrl(_g.ConnectURL) : null;
-                _ = _chores.IsURLValid(EConfig.IdleImg) ? builder.WithImageUrl(EConfig.IdleImg.Replace("{MAPNAME}", _g.MapName)) : null;
-                return builder.Build();
+                builder.WithDescription($"**Mapa:** `{_g.MapName}`\n\nO servidor está aguardando jogadores!");
+                builder.AddField("Jogadores Online", "Nenhum jogador conectado.", false);
             }
+
+            // Informação de conexão (comum a ambos os casos)
+            string connectInfo = _chores.IsURLValid(GConfig.PHPURL)
+                ? $"[Conectar via Steam]({_g.ConnectURL})"
+                : $"`connect {_g.ServerIP}`";
+            builder.AddField("Servidor", connectInfo, false);
+            
+            return builder.Build();
         }
+
 
         public async Task RequestPlayers(string name)
         {
@@ -303,14 +356,13 @@ namespace DiscordStatus
 
                     var builder = new EmbedBuilder()
                         .WithTitle($"Fim de Partida `{_g.MapName}`")
-                        .WithDescription($"**Placar Final**\n {ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}")
+                        .WithDescription($"**Placar**\n {ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}")
                         .WithColor(_chores.GetEmbedColor())
                         .WithTimestamp(DateTimeOffset.UtcNow); // Define o rodapé apenas com o horário
 
                     builder.AddField("👑 MVP da Partida", mvp, false);
-                    builder.AddField($"{ctTeamName} ({_g.CTScore})", ctnames, true);
-                    builder.AddField($"{tTeamName} ({_g.TScore})", tnames, true);
-                    builder.AddField("\u200B", "\u200B", false); // Campo em branco para espaçamento
+                    builder.AddField($"{ctTeamName}", ctnames, true);
+                    builder.AddField($"{tTeamName}", tnames, true);
 
                     string connectInfo = _chores.IsURLValid(GConfig.PHPURL)
                         ? $"[Conectar via Steam]({_g.ConnectURL})"
