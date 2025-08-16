@@ -112,37 +112,79 @@ namespace DiscordStatus
             return HookResult.Continue;
         }
 
+        // private HookResult OnGameEnd(EventCsWinPanelMatch @event, GameEventInfo info)
+        // {
+        //     if (!_g.WConfig.GameEndScoreboard) return HookResult.Continue;
+        //     var _players = Utilities.GetPlayers();
+        //     foreach (var _player in _players)
+        //     {
+        //         _chores.UpdatePlayer(_player);
+        //     };
+        //     var players = _g.PlayerList;
+
+        //     if (players.Count > 0)
+        //     {
+        //         _chores.SortPlayers();
+
+        //         var tPlayerList = players
+        //             .Where(kv => kv.Value != null && kv.Value.TeamID == 2)
+        //             .Select(kv => _chores.FormatStats(kv.Value));
+
+        //         var crPlayerList = players
+        //             .Where(kv => kv.Value != null && kv.Value.TeamID == 3)
+        //             .Select(kv => _chores.FormatStats(kv.Value));
+
+        //         _g.TPlayersName.AddRange(tPlayerList);
+        //         _g.CtPlayersName.AddRange(crPlayerList);
+        //     }
+
+        //     var _teams = Utilities.FindAllEntitiesByDesignerName<CCSTeam>("cs_team_manager");
+        //     _chores.GetScore(_teams);
+        //     var mvp = _g.TScore >= _g.CTScore ? _g.TPlayersName.FirstOrDefault() : _g.CtPlayersName.FirstOrDefault();
+        //     Task.Run(() => _webhook.GameEnd(mvp));
+        //     return HookResult.Continue;
+        // }
         private HookResult OnGameEnd(EventCsWinPanelMatch @event, GameEventInfo info)
         {
             if (!_g.WConfig.GameEndScoreboard) return HookResult.Continue;
-            var _players = Utilities.GetPlayers();
-            foreach (var _player in _players)
+
+            // Garante que as estatísticas de todos os jogadores válidos estão atualizadas.
+            foreach (var player in Utilities.GetPlayers().Where(_chores.IsPlayerValid))
             {
-                _chores.UpdatePlayer(_player);
-            };
-            var players = _g.PlayerList;
-
-            if (players.Count > 0)
-            {
-                _chores.SortPlayers();
-
-                var tPlayerList = players
-                    .Where(kv => kv.Value != null && kv.Value.TeamID == 2)
-                    .Select(kv => _chores.FormatStats(kv.Value));
-
-                var crPlayerList = players
-                    .Where(kv => kv.Value != null && kv.Value.TeamID == 3)
-                    .Select(kv => _chores.FormatStats(kv.Value));
-
-                _g.TPlayersName.AddRange(tPlayerList);
-                _g.CtPlayersName.AddRange(crPlayerList);
+                _chores.UpdatePlayer(player);
             }
 
-            var _teams = Utilities.FindAllEntitiesByDesignerName<CCSTeam>("cs_team_manager");
-            _chores.GetScore(_teams);
-            var mvp = _g.TScore >= _g.CTScore ? _g.TPlayersName.FirstOrDefault() : _g.CtPlayersName.FirstOrDefault();
-            Task.Run(() => _webhook.GameEnd(mvp));
+            // Cria uma "fotografia" da lista de jogadores para evitar problemas de concorrência com desconexões.
+            var playersSnapshot = new Dictionary<int, PlayerInfo>(_g.PlayerList);
+
+            if (playersSnapshot.Count > 0)
+            {
+                // Cria uma lista ordenada dos jogadores a partir da nossa "fotografia" local.
+                var sortedPlayers = playersSnapshot.Values.OrderByDescending(p => p.Kills).ToList();
+
+                var tPlayerListFormatted = sortedPlayers
+                    .Where(p => p != null && p.TeamID == 2)
+                    .Select(p => _chores.FormatStats(p))
+                    .ToList();
+
+                var ctPlayerListFormatted = sortedPlayers
+                    .Where(p => p != null && p.TeamID == 3)
+                    .Select(p => _chores.FormatStats(p))
+                    .ToList();
+
+                var teams = Utilities.FindAllEntitiesByDesignerName<CCSTeam>("cs_team_manager");
+                _chores.GetScore(teams);
+
+                // Determina o MVP a partir das listas formatadas que acabamos de criar.
+                var mvp = (_g.TScore >= _g.CTScore ? tPlayerListFormatted.FirstOrDefault() : ctPlayerListFormatted.FirstOrDefault()) ?? "N/A";
+
+                // Passa as listas preparadas diretamente para o método do webhook.
+                Task.Run(() => _webhook.GameEnd(mvp, tPlayerListFormatted, ctPlayerListFormatted));
+            }
+
             return HookResult.Continue;
         }
+
+
     }
 }

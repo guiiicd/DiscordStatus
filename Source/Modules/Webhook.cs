@@ -1,10 +1,19 @@
 ﻿using Discord;
 using Discord.Webhook;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DiscordStatus
 {
     public class Webhook : IWebhook
     {
+        // 1. NOME E AVATAR FIXOS PARA O WEBHOOK
+        // Conforme solicitado, o nome e a foto do webhook são definidos aqui.
+        private const string WebhookUsername = "THE OWLS - PLACAR";
+        private const string WebhookAvatarUrl = "https://images-ext-1.discordapp.net/external/4Tw6wzN5XaaCGxEd2Sbukw3yql9LLTMr3t3KcXjdSz0/%3Fsize%3D2048/https/cdn.discordapp.com/avatars/1379614604048470026/56c3370ef900262b2140813227713fb7.png?format=webp&quality=lossless";
+
         private readonly IChores _chores;
         private readonly Globals _g;
         private WebhookConfig WConfig => _g.WConfig;
@@ -58,7 +67,10 @@ namespace DiscordStatus
                     if (WConfig.StatusMessageID == 0)
                     {
                         DSLog.Log(2, "MessageID is not set up yet, Creating a new one now!");
-                        ulong message = await webhookClient.SendMessageAsync(embeds: new[] { CreateStatusEmbed() });
+                        ulong message = await webhookClient.SendMessageAsync(
+                            embeds: new[] { CreateStatusEmbed() },
+                            username: WebhookUsername,
+                            avatarUrl: WebhookAvatarUrl);
                         _g.MessageID = message;
                         await ConfigManager.SaveAsync("WebhookConfig", "StatusMessageID", _g.MessageID);
                     }
@@ -149,7 +161,7 @@ namespace DiscordStatus
                 EmbedBuilder builder = new EmbedBuilder()
                     .WithTitle(EConfig.Title)
                     .AddField(EConfig.MapField, $"```ansi\r\n\u001b[2;31m{_g.MapName}\u001b[0m\r\n```", inline: true)
-                    .AddField(EConfig.OnlineField, $"```ansi\n[2;33m[2;31m{EConfig.ServerEmpty}[0m[2;33m[0m[2;33m[0m\n```", inline: true)
+                    .AddField(EConfig.OnlineField, $"```ansi\n [2;33m [2;31m{EConfig.ServerEmpty} [0m [2;33m [0m [2;33m [0m\n```", inline: true)
                     .AddField("ㅤ", _chores.IsURLValid(GConfig.PHPURL) ? $"[**`connect {_g.ServerIP}`**]( {_g.ConnectURL})ㅤ{EConfig.JoinHere}" : $"**`connect {_g.ServerIP}`**ㅤ{EConfig.JoinHere}")
                     .WithColor(_chores.GetEmbedColor())
                     .WithCurrentTimestamp();
@@ -178,10 +190,13 @@ namespace DiscordStatus
                     .WithColor(new Color(255, 0, 0))
                     .WithCurrentTimestamp();
                 _ = _chores.IsURLValid(EConfig.RequestImg) ? builder.WithImageUrl(EConfig.RequestImg.Replace("{MAPNAME}", _g.MapName)) : null;
-                _ = builder.Build();
-                using (webhookClient) // Dispose of the client after use
+                
+                using (webhookClient)
                 {
-                    await webhookClient.SendMessageAsync(embeds: new[] { builder.Build() });
+                    await webhookClient.SendMessageAsync(
+                        embeds: new[] { builder.Build() },
+                        username: WebhookUsername,
+                        avatarUrl: WebhookAvatarUrl);
                 }
             }
         }
@@ -206,15 +221,19 @@ namespace DiscordStatus
                     .WithCurrentTimestamp();
                 _ = _chores.IsURLValid(_g.ConnectURL) ? builder.WithUrl(_g.ConnectURL) : null;
                 _ = _chores.IsURLValid(EConfig.MapImg) ? builder.WithImageUrl(EConfig.MapImg.Replace("{MAPNAME}", mapname)) : null;
-                _ = builder.Build();
-                using (webhookClient) // Dispose of the client after use
+
+                using (webhookClient)
                 {
-                    _ = await webhookClient.SendMessageAsync(embeds: new[] { builder.Build() });
+                    _ = await webhookClient.SendMessageAsync(
+                        embeds: new[] { builder.Build() },
+                        username: WebhookUsername,
+                        avatarUrl: WebhookAvatarUrl);
                 }
             }
         }
 
-        public async Task GameEnd(string mvp)
+        // 2. NOVO LAYOUT PARA O PLACAR DE FIM DE PARTIDA
+        public async Task GameEnd(string mvp, List<string> tplayersName, List<string> ctplayersName)
         {
             List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.ScoreboardURL);
             foreach (DiscordWebhookClient webhookClient in webhookClients)
@@ -224,37 +243,41 @@ namespace DiscordStatus
                     continue;
                 }
 
-                List<string> tplayersName = _g.TPlayersName;
-                List<string> ctplayersName = _g.CtPlayersName;
-                string tnames;
-                string ctnames;
-
-                if (_g.PlayerList.Count > 0)
+                if (tplayersName.Any() || ctplayersName.Any())
                 {
-                    long timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                    if (_g.HasCC)
-                    {
-                        tnames = !tplayersName.Any() ? "ㅤ" : string.Join("\n", tplayersName);
-                        ctnames = !ctplayersName.Any() ? "ㅤ" : string.Join("\n", ctplayersName);
-                    }
-                    else
-                    {
-                        ctnames = !ctplayersName.Any() ? "```ㅤ```" : $"```ansi\r\n\u001b[0;34m{string.Join("\n", ctplayersName)}\u001b[0m\r\n```";
-                        tnames = !tplayersName.Any() ? "```ㅤ```" : $"```ansi\r\n\u001b[0;33m{string.Join("\n", tplayersName)}\u001b[0m\r\n```";
-                    }
-                    EmbedBuilder builder = new EmbedBuilder()
-                        .WithTitle(EConfig.Title)
-                        .WithDescription($"```ansi\r\n\u001b[2;31mServer: {_g.ServerIP}\nGameID: {timestamp} \u001b[0m\r\n```Time: <t:{timestamp}:f>")
-                        .AddField($"{EConfig.MapField}", $"```ansi\r\n\u001b[2;31m{_g.MapName}\u001b[0m\r\n```", inline: true)
-                        .AddField(EConfig.OnlineField, $"```ansi\r\n\u001b[2;31m{_g.PlayerList.Count}\u001b[0m/\u001b[2;32m{_g.MaxPlayers}\u001b[0m\r\n```", inline: true)
-                        .AddField($"{EConfig.MVPField}", $"{mvp}", inline: false)
-                        .AddField(EConfig.CTField.Replace("{SCORE}", _g.CTScore.ToString()), ctnames, inline: EConfig.PlayersInline)
-                        .AddField(EConfig.TField.Replace("{SCORE}", _g.TScore.ToString()), tnames, inline: EConfig.PlayersInline)
+                    string tnames = !tplayersName.Any() ? "Nenhum jogador" : string.Join("\n", tplayersName);
+                    string ctnames = !ctplayersName.Any() ? "Nenhum jogador" : string.Join("\n", ctplayersName);
+
+                    var builder = new EmbedBuilder()
+                        .WithTitle($"Fim de Partida em {_g.MapName}")
+                        .WithDescription($"**Placar Final:** CT **{_g.CTScore}** vs **{_g.TScore}** T")
                         .WithColor(_chores.GetEmbedColor())
-                        .WithCurrentTimestamp();
-                    using (webhookClient) // Dispose of the client after use
+                        .WithTimestamp(DateTimeOffset.UtcNow);
+
+                    builder.AddField("👑 MVP da Partida", mvp, false);
+                    builder.AddField($"🛡️ Contra-Terroristas ({_g.CTScore})", ctnames, true);
+                    builder.AddField($"💣 Terroristas ({_g.TScore})", tnames, true);
+                    builder.AddField("\u200B", "\u200B", false); // Campo em branco para espaçamento
+
+                    string connectInfo = _chores.IsURLValid(GConfig.PHPURL)
+                        ? $"[Conectar via Steam]({_g.ConnectURL})"
+                        : $"`connect {_g.ServerIP}`";
+                    builder.AddField("Servidor", connectInfo, false);
+
+                    if (_chores.IsURLValid(EConfig.MapImg))
                     {
-                        _ = await webhookClient.SendMessageAsync(embeds: new[] { builder.Build() });
+                        builder.WithImageUrl(EConfig.MapImg.Replace("{MAPNAME}", _g.MapName));
+                    }
+
+                    builder.WithFooter($"Jogadores na partida: {tplayersName.Count + ctplayersName.Count}/{_g.MaxPlayers}");
+
+                    using (webhookClient)
+                    {
+                        await webhookClient.SendMessageAsync(
+                            embeds: new[] { builder.Build() },
+                            username: WebhookUsername,
+                            avatarUrl: WebhookAvatarUrl
+                        );
                     }
                 }
             }
@@ -280,7 +303,7 @@ namespace DiscordStatus
                     _ = _chores.IsURLValid(EConfig.OfflineImg) ? builder.WithImageUrl(EConfig.OfflineImg) : null;
                     properties.Embeds = new[] { builder.Build() };
                 });
-                using (webhookClient) // Dispose of the client after use
+                using (webhookClient)
                 {
                     // Additional logic if needed after modifying the message
                 }
