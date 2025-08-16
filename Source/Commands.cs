@@ -1,8 +1,9 @@
-﻿using System.Reflection;
-using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
+using System;
+using System.Threading.Tasks;
 
 namespace DiscordStatus
 {
@@ -14,6 +15,7 @@ namespace DiscordStatus
         [ConsoleCommand("css_request", "Request players from discord")]
         public async void RequestPlayers(CCSPlayerController? player, CommandInfo command)
         {
+            // A verificação `_chores.IsPlayerValid(player)` já garante que `player` não é nulo.
             if (_chores.IsPlayerValid(player))
             {
                 if (IsGlobalCooldownActive())
@@ -21,7 +23,8 @@ namespace DiscordStatus
                     DSLog.LogToChat(player, "{RED}Command is on global cooldown. Please wait.");
                     return;
                 }
-                await _webhook.RequestPlayers(player.PlayerName);
+                // Como IsPlayerValid é true, podemos acessar PlayerName com segurança.
+                await _webhook.RequestPlayers(player!.PlayerName);
                 SetGlobalCooldown();
                 DSLog.LogToChat(player, "{GREEN}Request Sent");
             }
@@ -37,12 +40,12 @@ namespace DiscordStatus
         [RequiresPermissions("@css/root")]
         public async void UpdateNames(CCSPlayerController? player, CommandInfo command)
         {
-            _update.Stop();
+            _update?.Stop(); // Usa o operador '?' para parar o timer apenas se ele não for nulo.
             var names = command.ArgString;
             _g.NameFormat = names;
             await ConfigManager.SaveAsync("EmbedConfig", "NameFormat", names);
             await UpdateAsync();
-            _update.Start();
+            _update?.Start(); // Usa o operador '?' para iniciar o timer apenas se ele não for nulo.
             if (!_chores.IsPlayerValid(player)) return;
             DSLog.LogToChat(player, $"{{GREEN}}Name format updated to '{names}'!");
         }
@@ -51,10 +54,10 @@ namespace DiscordStatus
         [RequiresPermissions("@css/root")]
         public async void UpdateSettings(CCSPlayerController? player, CommandInfo command)
         {
-            _update.Stop();
+            _update?.Stop(); // Usa o operador '?' para parar o timer apenas se ele não for nulo.
             await ConfigManager.UpdateAsync(_g);
             await UpdateAsync();
-            _update.Start();
+            _update?.Start(); // Usa o operador '?' para iniciar o timer apenas se ele não for nulo.
             if (!_chores.IsPlayerValid(player)) return;
             DSLog.LogToChat(player, $"color: {_g.EConfig.RandomColor}{_chores.GetEmbedColor()}");
             DSLog.LogToChat(player, "{GREEN}Updated config settings!");

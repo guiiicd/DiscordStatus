@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace DiscordStatus
 {
@@ -9,19 +11,43 @@ namespace DiscordStatus
 
         internal static void GetPath(string ModuleDirectory, string ModuleName)
         {
-            string? parentDirectory = Directory.GetParent(path: Directory.GetParent(ModuleDirectory).FullName)?.FullName;
-            FileDir = Path.Combine(parentDirectory, @$"configs/plugins/{ModuleName}");
+            // Garante que o diretório pai existe antes de tentar usá-lo.
+            var parentDir = Directory.GetParent(ModuleDirectory)?.FullName;
+            if (parentDir == null)
+            {
+                DSLog.Log(2, "Could not find parent directory for configs.");
+                return;
+            }
+            var parentOfParentDir = Directory.GetParent(parentDir)?.FullName;
+            if (parentOfParentDir == null)
+            {
+                 DSLog.Log(2, "Could not find parent of parent directory for configs.");
+                 return;
+            }
+
+            FileDir = Path.Combine(parentOfParentDir, @$"configs/plugins/{ModuleName}");
             FilePath = Path.Combine(FileDir, $"{ModuleName}.json");
         }
 
         internal static async Task UpdateAsync(Globals globals)
         {
+            if (string.IsNullOrEmpty(FilePath))
+            {
+                DSLog.Log(2, "Config file path is not set. Cannot update settings.");
+                return;
+            }
             try
             {
                 var json = await File.ReadAllTextAsync(FilePath);
                 var configData = JsonConvert.DeserializeObject<DSconfig>(json);
 
-                // Update the properties in the provided Globals instance
+                if (configData == null)
+                {
+                    DSLog.Log(2, "Failed to deserialize config JSON.");
+                    return;
+                }
+
+                // Atualiza as propriedades na instância Globals.
                 globals.Config = configData;
                 globals.GConfig = configData.GeneralConfig;
                 globals.WConfig = configData.WebhookConfig;
@@ -47,10 +73,21 @@ namespace DiscordStatus
 
         internal static async Task SaveAsync(string className, string propertyName, object propertyValue)
         {
+            if (string.IsNullOrEmpty(FilePath))
+            {
+                DSLog.Log(2, "Config file path is not set. Cannot save settings.");
+                return;
+            }
+
             var json = File.ReadAllText(FilePath);
             var configData = JsonConvert.DeserializeObject<DSconfig>(json);
 
-            // Use reflection to get the specified class instance within DSconfig
+            if (configData == null)
+            {
+                DSLog.Log(2, "Failed to deserialize config JSON for saving.");
+                return;
+            }
+
             var classProperty = typeof(DSconfig).GetProperty(className);
             if (classProperty == null)
             {
@@ -58,10 +95,13 @@ namespace DiscordStatus
                 return;
             }
 
-            // Get the current instance of the specified class
             var classInstance = classProperty.GetValue(configData);
+            if (classInstance == null)
+            {
+                 DSLog.Log(2, $"Class instance '{className}' is null in DSconfig.");
+                 return;
+            }
 
-            // Use reflection to set the specified property within the class
             var propertyInfo = classInstance.GetType().GetProperty(propertyName);
             if (propertyInfo != null)
             {
@@ -80,6 +120,11 @@ namespace DiscordStatus
 
         internal static async Task RenameAsync(DSconfig Config)
         {
+            if (string.IsNullOrEmpty(FileDir) || string.IsNullOrEmpty(FilePath))
+            {
+                DSLog.Log(2, "Config file path is not set. Cannot rename old config.");
+                return;
+            }
             var oldConfigName = Path.GetFileNameWithoutExtension(FilePath) + "(old).json";
             var oldConfigPath = Path.Combine(FileDir, oldConfigName);
             File.Move(FilePath, oldConfigPath);

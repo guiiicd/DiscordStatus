@@ -1,5 +1,7 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace DiscordStatus
 {
@@ -20,18 +22,20 @@ namespace DiscordStatus
             _query = query;
             _chores = chores;
             _g = g;
+            // Inicializa a Config com um valor padrão para satisfazer o compilador.
+            Config = new DSconfig();
         }
 
         public override async void Load(bool hotReload)
         {
             Server.NextFrame(() =>
             {
-                _g.MapName = NativeAPI.GetMapName();
+                _g.MapName = Server.MapName;
             });
             RegisterListeners();
             if (!hotReload)
             {
-                if (_g.MapName == null || _g.MapName == string.Empty)
+                if (string.IsNullOrEmpty(_g.MapName))
                 {
                     DSLog.Log(2, "Map Invalid, Waiting Listeners");
                 }
@@ -60,7 +64,8 @@ namespace DiscordStatus
         public void OnConfigParsed(DSconfig config)
         {
             ConfigManager.GetPath(ModuleDirectory, ModuleName);
-            if (config.Version == null || config.Version < _g.Config.Version)
+            // A verificação 'config.Version == null' foi removida pois 'int' não pode ser nulo.
+            if (config.Version < _g.Config.Version)
             {
                 DSLog.Log(2, $"Config version mismatch (Expected: {_g.Config.Version} | Current: {config.Version})");
                 Task.Run(async () => await ConfigManager.RenameAsync(_g.Config));
@@ -85,7 +90,6 @@ namespace DiscordStatus
         {
             DSLog.Log(0, "Starting~");
             _g.ConnectURL = _chores.IsURLValid(_g.GConfig.PHPURL) ? string.Concat(_g.GConfig.PHPURL, $"?ip={_g.ServerIP}") : "ConnectURL Error";
-            //webhookClient.ModifyWebhookAsync(x => x.Image = );
             await _webhook.InitialMessageAsync();
             if (_g.MessageID != 0)
             {
@@ -96,48 +100,12 @@ namespace DiscordStatus
             }
         }
 
-        // public async Task UpdateAsync()
-        // {
-        //     await Task.Run(() =>
-        //     {
-        //         Server.NextFrame(() =>
-        //         {
-        //             var _players = Utilities.GetPlayers().Where(p => _chores.IsPlayerValid(p));
-        //             foreach (var player in _players)
-        //             {
-        //                 _chores.UpdatePlayer(player);
-        //             }
-
-        //             var players = _g.PlayerList;
-
-        //             if (players.Count > 0)
-        //             {
-        //                 _chores.SortPlayers();
-
-        //                 var tPlayerList = players
-        //                     .Where(kv => kv.Value != null && kv.Value.TeamID == 2)
-        //                     .Select(kv => _chores.FormatStats(kv.Value));
-
-        //                 var ctPlayerList = players
-        //                     .Where(kv => kv.Value != null && kv.Value.TeamID == 3)
-        //                     .Select(kv => _chores.FormatStats(kv.Value));
-
-        //                 _g.TPlayersName.AddRange(tPlayerList);
-        //                 _g.CtPlayersName.AddRange(ctPlayerList);
-        //             }
-        //         });
-        //     });
-
-        //     await _webhook.UpdateEmbed();
-        // }
-
         public async Task UpdateAsync()
         {
             await Task.Run(() =>
             {
                 Server.NextFrame(() =>
                 {
-                    // Adiciona a atualização constante do nome do mapa para garantir que esteja sempre correto.
                     _g.MapName = Server.MapName;
 
                     var _players = Utilities.GetPlayers().Where(p => _chores.IsPlayerValid(p));
@@ -168,6 +136,5 @@ namespace DiscordStatus
 
             await _webhook.UpdateEmbed();
         }
-
     }
 }
