@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using CounterStrikeSharp.API.Core;
 using Discord;
+using System;
 
 namespace DiscordStatus
 {
@@ -10,6 +11,7 @@ namespace DiscordStatus
     {
         private readonly Globals _g;
         private readonly IQuery _query;
+        private EmbedConfig EConfig => _g.EConfig;
 
         public Chores(Globals globals, IQuery query)
         {
@@ -17,26 +19,44 @@ namespace DiscordStatus
             _query = query;
         }
 
-        private EmbedConfig EConfig => _g.EConfig;
-
+        // Formatador para o status em tempo real (agora usa /)
         public string FormatStats(PlayerInfo playerinfo)
         {
             var nameBuilder = new StringBuilder(_g.NameFormat);
-            nameBuilder.Replace("{NAME}", playerinfo.Name);
+            nameBuilder.Replace("{NAME}", playerinfo.Name ?? "Player");
             nameBuilder.Replace("{K}", playerinfo.Kills.ToString());
             nameBuilder.Replace("{D}", playerinfo.Deaths.ToString());
             nameBuilder.Replace("{A}", playerinfo.Assists.ToString());
             nameBuilder.Replace("{KD}", playerinfo.KD);
-            nameBuilder.Replace("{CLAN}", playerinfo.Clan);
-            nameBuilder.Replace("{CC}", playerinfo.Country);
-            nameBuilder.Replace("{FLAG}", $":flag_{playerinfo.Country.ToLower()}:");
-            nameBuilder.Replace("{RC}", playerinfo.Region);
-            var formattedName = nameBuilder.ToString();
+            nameBuilder.Replace("{CLAN}", playerinfo.Clan ?? "");
+            nameBuilder.Replace("{CC}", playerinfo.Country ?? "");
+            nameBuilder.Replace("{FLAG}", $":flag_{playerinfo.Country?.ToLower()}:");
+            nameBuilder.Replace("{RC}", playerinfo.Region ?? "");
+            
+            // Substitui o separador para usar a barra
+            var formattedName = nameBuilder.ToString().Replace(" - ", " / ");
+
             if (EConfig.EmbedSteamLink)
             {
                 formattedName = $"[{formattedName}](https://steamcommunity.com/profiles/{playerinfo.SteamId})";
             }
             return formattedName;
+        }
+
+        // NOVO formatador para o placar de fim de partida
+        public string FormatStatsForScoreboard(PlayerInfo playerinfo)
+        {
+            const int nameWidth = 16;
+            string playerName = playerinfo.Name ?? "Unknown";
+            playerName = playerName.Length > nameWidth ? playerName.Substring(0, nameWidth - 1) + "…" : playerName;
+
+            string namePadded = playerName.PadRight(nameWidth);
+            string killsPadded = (playerinfo.Kills?.ToString() ?? "0").PadLeft(3);
+            string assistsPadded = (playerinfo.Assists?.ToString() ?? "0").PadLeft(3);
+            string deathsPadded = (playerinfo.Deaths?.ToString() ?? "0").PadLeft(3);
+            string scorePadded = (playerinfo.Score?.ToString() ?? "0").PadLeft(5);
+
+            return $"{namePadded} {killsPadded} {assistsPadded} {deathsPadded} {scorePadded}";
         }
 
         public Color GetEmbedColor()
@@ -48,7 +68,6 @@ namespace DiscordStatus
                 {
                     rng.GetBytes(randomBytes);
                 }
-
                 return new Color(randomBytes[0], randomBytes[1], randomBytes[2]);
             }
             else
@@ -57,20 +76,6 @@ namespace DiscordStatus
             }
         }
 
-        // public void GetScore(IEnumerable<CCSTeam> Teams)
-        // {
-        //     foreach (var team in Teams)
-        //     {
-        //         if (team.TeamNum == 2)
-        //         {
-        //             _g.TScore = team.Score;
-        //         }
-        //         else if (team.TeamNum == 3)
-        //         {
-        //             _g.CTScore = team.Score;
-        //         }
-        //     }
-        // }
         public void GetScore(IEnumerable<CCSTeam> Teams)
         {
             foreach (var team in Teams)
@@ -101,29 +106,24 @@ namespace DiscordStatus
             };
             if (_g.HasRC)
             {
-                Task.Run(async () => playerInfo.Region = await _query.IPQueryAsync(playerInfo.IpAddress, "region_code").ConfigureAwait(false) ?? string.Empty);
+                Task.Run(async () => playerInfo.Region = await _query.IPQueryAsync(playerInfo.IpAddress ?? "", "region_code").ConfigureAwait(false) ?? string.Empty);
             }
-
             if (_g.HasCC)
             {
-                Task.Run(async () => playerInfo.Country = await _query.GetCountryCodeAsync(playerInfo.IpAddress).ConfigureAwait(false) ?? string.Empty);
+                Task.Run(async () => playerInfo.Country = await _query.GetCountryCodeAsync(playerInfo.IpAddress ?? "").ConfigureAwait(false) ?? string.Empty);
             }
             _g.PlayerList[player.Slot] = playerInfo;
         }
 
         public bool IsPlayerValid(CCSPlayerController? player)
         {
-            return (player is
-            {
-                IsValid: true, IsBot: false, IsHLTV: false
-            }); ;
+            return player is { IsValid: true, IsBot: false, IsHLTV: false };
         }
 
         public bool IsURLValid(string? url)
         {
-            string? urlPattern = @"^(https?:\/\/[^\s\/$.?#].[^\s]*)$";
-            Regex regex = new(urlPattern, RegexOptions.IgnoreCase);
-            return regex.IsMatch(url);
+            if (string.IsNullOrWhiteSpace(url)) return false;
+            return Uri.TryCreate(url, UriKind.Absolute, out _);
         }
 
         public void SortPlayers()
@@ -138,12 +138,14 @@ namespace DiscordStatus
             var kills = updatedPlayer.ActionTrackingServices?.MatchStats.Kills ?? 0;
             var deaths = updatedPlayer.ActionTrackingServices?.MatchStats.Deaths ?? 0;
             var assists = updatedPlayer.ActionTrackingServices?.MatchStats.Assists ?? 0;
+            var score = updatedPlayer.Score; // <-- CAPTURA A PONTUAÇÃO
             var clan = updatedPlayer.Clan ?? "";
             var TeamID = updatedPlayer.TeamNum;
             string kdRatio = deaths != 0 ? (kills / (double)deaths).ToString("G2") : kills.ToString();
-            _g.PlayerList.TryGetValue(updatedPlayer.Slot, out var existingPlayer);
-            if (existingPlayer != null)
+            
+            if (_g.PlayerList.TryGetValue(updatedPlayer.Slot, out var existingPlayer))
             {
+                existingPlayer.Score = score; // <-- ATUALIZA A PONTUAÇÃO
                 existingPlayer.Kills = kills;
                 existingPlayer.Deaths = deaths;
                 existingPlayer.Assists = assists;

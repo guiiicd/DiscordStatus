@@ -16,6 +16,7 @@
         public string? Clan { get; set; }
 
         public int? TeamID { get; set; }
+        public int? Score { get; set; } = 0;
         public int? Kills { get; set; } = 0;
         public int? Deaths { get; set; } = 0;
         public int? Assists { get; set; } = 0;

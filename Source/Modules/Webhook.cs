@@ -192,27 +192,73 @@ namespace DiscordStatus
             }
         }
 
+        // public async Task GameEnd(string mvp, List<string> tplayersName, List<string> ctplayersName)
+        // {
+        //     List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.ScoreboardURL);
+        //     foreach (var webhookClient in webhookClients)
+        //     {
+        //         string tnames = !tplayersName.Any() ? "Nenhum jogador" : string.Join("\n", tplayersName);
+        //         string ctnames = !ctplayersName.Any() ? "Nenhum jogador" : string.Join("\n", ctplayersName);
+        //         string ctTeamName = string.IsNullOrEmpty(_g.CTName) ? "Contra-Terroristas" : _g.CTName;
+        //         string tTeamName = string.IsNullOrEmpty(_g.TName) ? "Terroristas" : _g.TName;
+
+        //         var builder = new EmbedBuilder()
+        //             .WithTitle($"Fim de Partida `{_g.MapName}`")
+        //             .WithDescription($"**Placar**\n {ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}")
+        //             .WithColor(_chores.GetEmbedColor())
+        //             .WithTimestamp(DateTimeOffset.UtcNow);
+
+        //         builder.AddField("👑 MVP da Partida", mvp, false);
+        //         builder.AddField(ctTeamName, ctnames, true);
+        //         builder.AddField(tTeamName, tnames, true);
+
+        //         string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}````";
+        //         builder.AddField("Servidor", connectInfo, false);
+
+        //         if (_chores.IsURLValid(EConfig.MapImg))
+        //         {
+        //             builder.WithImageUrl(EConfig.MapImg.Replace("{MAPNAME}", _g.MapName));
+        //         }
+
+        //         await webhookClient.SendMessageAsync(
+        //             embeds: new[] { builder.Build() },
+        //             username: WebhookUsername,
+        //             avatarUrl: WebhookAvatarUrl);
+        //     }
+        // }
         public async Task GameEnd(string mvp, List<string> tplayersName, List<string> ctplayersName)
         {
             List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.ScoreboardURL);
             foreach (var webhookClient in webhookClients)
             {
-                string tnames = !tplayersName.Any() ? "Nenhum jogador" : string.Join("\n", tplayersName);
-                string ctnames = !ctplayersName.Any() ? "Nenhum jogador" : string.Join("\n", ctplayersName);
                 string ctTeamName = string.IsNullOrEmpty(_g.CTName) ? "Contra-Terroristas" : _g.CTName;
                 string tTeamName = string.IsNullOrEmpty(_g.TName) ? "Terroristas" : _g.TName;
 
+                // Cabeçalho da tabela do placar
+                string scoreboardHeader = "JOGADOR            K   A   D  PONTOS\n" +
+                                        "------------------ --- --- --- -----";
+
+                string ctnames = !ctplayersName.Any() 
+                    ? "```Nenhum jogador```" 
+                    : $"```{scoreboardHeader}\n{string.Join("\n", ctplayersName)}```";
+            
+                string tnames = !tplayersName.Any() 
+                    ? "```Nenhum jogador```" 
+                    : $"```{scoreboardHeader}\n{string.Join("\n", tplayersName)}```";
+
                 var builder = new EmbedBuilder()
                     .WithTitle($"Fim de Partida `{_g.MapName}`")
-                    .WithDescription($"**Placar**\n {ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}")
+                    .WithDescription($"**Placar Final**\n{ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}")
                     .WithColor(_chores.GetEmbedColor())
                     .WithTimestamp(DateTimeOffset.UtcNow);
 
                 builder.AddField("👑 MVP da Partida", mvp, false);
-                builder.AddField(ctTeamName, ctnames, true);
-                builder.AddField(tTeamName, tnames, true);
+                
+                // Adiciona os placares dos times em campos separados para melhor visualização
+                builder.AddField($"{ctTeamName} (Vencedores)", ctnames, false);
+                builder.AddField($"{tTeamName}", tnames, false);
 
-                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}````";
+                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"`connect {_g.ServerIP}`";
                 builder.AddField("Servidor", connectInfo, false);
 
                 if (_chores.IsURLValid(EConfig.MapImg))
@@ -226,6 +272,7 @@ namespace DiscordStatus
                     avatarUrl: WebhookAvatarUrl);
             }
         }
+
 
         public async Task ServerOffiline()
         {
