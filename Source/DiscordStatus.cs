@@ -95,10 +95,11 @@ namespace DiscordStatus
             await _webhook.InitialMessageAsync();
             if (_g.MessageID != 0)
             {
-                _update = new System.Timers.Timer(TimeSpan.FromSeconds(_g.GConfig.UpdateInterval).TotalMilliseconds);
-                _update.Elapsed += async (sender, e) => await UpdateAsync();
-                _update.Start();
-                DSLog.Log(1, "Initialization completed successfully!");
+                // Timer de atualização periódica desativado conforme solicitado
+                // _update = new System.Timers.Timer(TimeSpan.FromSeconds(_g.GConfig.UpdateInterval).TotalMilliseconds);
+                // _update.Elapsed += async (sender, e) => await UpdateAsync();
+                // _update.Start();
+                DSLog.Log(1, "Initialization completed successfully! (Periodic updates disabled)");
             }
         }
 

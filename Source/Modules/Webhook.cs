@@ -259,6 +259,9 @@ namespace DiscordStatus
 
                 string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}```";
                 builder.AddField("Servidor", connectInfo, false);
+                
+                // Adiciona link de demos
+                builder.AddField("📹 Demos da Partida", "[Baixar Demos](https://bit.ly/TODemo)", false);
 
                 if (_chores.IsURLValid(EConfig.MapImg))
                 {
