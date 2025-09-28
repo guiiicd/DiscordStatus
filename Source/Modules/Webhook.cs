@@ -261,7 +261,7 @@ namespace DiscordStatus
                 builder.AddField("Servidor", connectInfo, false);
                 
                 // Adiciona link de demos
-                builder.AddField("📹 Demos da Partida", "[Baixar Demos](https://bit.ly/TODemo)", false);
+                builder.AddField("📹 Demos da Partida", "[Baixar Demos](http://137.131.134.232)", false);
 
                 if (_chores.IsURLValid(EConfig.MapImg))
                 {
