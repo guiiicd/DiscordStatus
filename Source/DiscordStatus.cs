@@ -2,9 +2,6 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using System.Threading.Tasks;
 using System.Linq;
-using System;
-using System.Net;
-using CounterStrikeSharp.API.Modules.Cvars;
 
 namespace DiscordStatus
 {
@@ -94,40 +91,7 @@ namespace DiscordStatus
         private async Task LoadDiscordStatusAsync()
         {
             DSLog.Log(0, "Starting~");
-
-            try
-            {
-                // Requer -enablefakeip na linha de comando do servidor
-                var sdrConVar = ConVar.Find("sdr_full_address");
-                string? sdrAddress = sdrConVar?.StringValue;
-
-                if (!string.IsNullOrEmpty(sdrAddress) && sdrAddress != "0.0.0.0:0" && sdrAddress.Contains(':'))
-                {
-                    // O ConVar sdr_full_address já vem no formato "ip:porta"
-                    DSLog.Log(1, $"SDR FakeIP detectado: {sdrAddress}");
-                    
-                    var parts = sdrAddress.Split(':');
-                    _g.FakeIP = parts[0];
-                    _g.FakeIPPort = ushort.TryParse(parts[1], out var port) ? port : (ushort)0;
-                }
-                else
-                {
-                    DSLog.Log(0, "Nenhum FakeIP (sdr_full_address) detectado. O servidor foi iniciado com -enablefakeip? Usando IP público.");
-                    _g.FakeIP = null; // Garante que esteja nulo
-                }
-            }
-            catch (Exception ex)
-            {
-                DSLog.Log(2, $"Erro ao capturar FakeIP: {ex.Message}");
-                _g.FakeIP = null;
-            }
-
             _g.ConnectURL = _chores.IsURLValid(_g.GConfig.PHPURL) ? string.Concat(_g.GConfig.PHPURL, $"?ip={_g.ServerIP}") : "ConnectURL Error";
-
-            string currentMap = _g.MapName ?? Server.MapName ?? "mapa_desconhecido";
-
-            await _webhook.SendServerOnlineMessageAsync(_g.ConnectURL, currentMap);
-
             await _webhook.InitialMessageAsync();
             if (_g.MessageID != 0)
             {
