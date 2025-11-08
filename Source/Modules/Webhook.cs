@@ -136,7 +136,6 @@ namespace DiscordStatus
 
             string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}```";
             builder.AddField("Servidor", connectInfo, false);
-            builder.AddField("Trocar Skin", "https://skin.cs2mix.com.br", false);
             return builder.Build();
         }
 
@@ -262,7 +261,9 @@ namespace DiscordStatus
                 builder.AddField("Servidor", connectInfo, false);
                 
                 // Adiciona link de demos
-                builder.AddField("📹 Demos da Partida", "[Baixar Demos](http://137.131.134.232)", false);
+                builder.AddField("Demos da Partida", "[Acessar Demos](http://137.131.134.232)", false);
+                builder.AddField("Trocar Skins", "[Altere suas skins](https://skin.cs2mix.com.br)", false);
+
 
                 if (_chores.IsURLValid(EConfig.MapImg))
                 {
