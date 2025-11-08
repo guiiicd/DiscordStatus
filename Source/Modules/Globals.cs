@@ -18,6 +18,8 @@
         public bool HasRC { get; set; } = false;
         public string? TName { get; set; }
         public string? CTName { get; set; }
+        public string? FakeIP { get; set; }
+        public ushort FakeIPPort { get; set; }
 
         public List<string> TPlayersName { get; set; } = new List<string>();
         public List<string> CtPlayersName { get; set; } = new List<string>();

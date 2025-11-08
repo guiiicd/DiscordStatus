@@ -91,7 +91,39 @@ namespace DiscordStatus
         private async Task LoadDiscordStatusAsync()
         {
             DSLog.Log(0, "Starting~");
+
+            try
+            {
+                // Requer -enablefakeip na linha de comando do servidor
+                uint rawFakeIp = Server.FakeIp;
+                ushort fakePort = Server.FakeIpPort;
+
+                if (rawFakeIp != 0 && fakePort != 0)
+                {
+                    // Converte o uint do IP para o formato string "x.x.x.x"
+                    // Adicione "using System.Net;" no topo do arquivo se der erro
+                    _g.FakeIP = new System.Net.IPAddress(BitConverter.GetBytes(rawFakeIp)).ToString();
+                    _g.FakeIPPort = fakePort;
+                    DSLog.Log(1, $"SDR FakeIP detectado: {_g.FakeIP}:{_g.FakeIPPort}");
+                }
+                else
+                {
+                    DSLog.Log(0, "Nenhum FakeIP detectado. O servidor foi iniciado com -enablefakeip? Usando IP público.");
+                    _g.FakeIP = null; // Garante que esteja nulo
+                }
+            }
+            catch (Exception ex)
+            {
+                DSLog.Log(2, $"Erro ao capturar FakeIP: {ex.Message}");
+                _g.FakeIP = null;
+            }
+
             _g.ConnectURL = _chores.IsURLValid(_g.GConfig.PHPURL) ? string.Concat(_g.GConfig.PHPURL, $"?ip={_g.ServerIP}") : "ConnectURL Error";
+
+            string currentMap = _g.MapName ?? Server.MapName ?? "mapa_desconhecido";
+
+            await _webhook.SendServerOnlineMessageAsync(_g.ConnectURL, currentMap);
+
             await _webhook.InitialMessageAsync();
             if (_g.MessageID != 0)
             {

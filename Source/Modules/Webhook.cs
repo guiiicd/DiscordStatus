@@ -305,5 +305,58 @@ namespace DiscordStatus
                 DSLog.Log(2, $"Error setting server to offline: {ex.Message}");
             }
         }
+
+        public async Task SendServerOnlineMessageAsync(string connectUrl, string mapName) // connectUrl é o fallback PHP
+        {
+            List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.ServerRestartWebhookURL);
+            
+            if (!webhookClients.Any())
+            {
+                DSLog.Log(0, "ServerRestartWebhookURL não está configurada. Pulando mensagem de servidor online.");
+                return;
+            }
+
+            DSLog.Log(1, "Enviando mensagem de 'Servidor Online' para o Discord...");
+
+            // ### LÓGICA DE ESCOLHA DO IP ###
+            string connectInfo;
+            if (!string.IsNullOrEmpty(_g.FakeIP) && _g.FakeIPPort != 0)
+            {
+                // Se o FakeIP foi detectado, usa ele.
+                connectInfo = $"```connect {_g.FakeIP}:{_g.FakeIPPort}```";
+                DSLog.Log(1, "Usando FakeIP para a mensagem de 'Servidor Online'.");
+            }
+            else
+            {
+                // Se não, usa o IP público (ServerIP)
+                connectInfo = $"```connect {_g.ServerIP}```";
+                DSLog.Log(1, "Usando IP Público para a mensagem de 'Servidor Online'.");
+            }
+            // ### FIM DA LÓGICA ###
+
+            foreach (var webhookClient in webhookClients)
+            {
+                var builder = new EmbedBuilder()
+                    .WithTitle("✅ Servidor Reiniciado e Online!")
+                    .WithDescription($"O servidor está pronto e rodando o mapa **{mapName}**.")
+                    .WithColor(new Color(0, 255, 0)) // Cor Verde
+                    .WithTimestamp(DateTimeOffset.UtcNow);
+                
+                // Adiciona o campo "Servidor" com o bloco de código
+                builder.AddField("Servidor", connectInfo, false);
+
+                try
+                {
+                    await webhookClient.SendMessageAsync(
+                        embeds: new[] { builder.Build() },
+                        username: WebhookUsername,
+                        avatarUrl: WebhookAvatarUrl);
+                }
+                catch (Exception ex)
+                {
+                    DSLog.Log(2, $"Falha ao enviar mensagem de servidor online: {ex.Message}");
+                }
+            }
+        }
     }
 }
