@@ -115,5 +115,8 @@ namespace DiscordStatus
 
         [JsonPropertyName("StatusMessageID")]
         public ulong StatusMessageID { get; set; } = 0;
+
+        [JsonPropertyName("ServerRestartWebhookURL")]
+        public string ServerRestartWebhookURL { get; set; } = "";
     }
 }

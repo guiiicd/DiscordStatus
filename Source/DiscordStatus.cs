@@ -2,6 +2,9 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using System.Threading.Tasks;
 using System.Linq;
+using System;
+using System.Net;
+using CounterStrikeSharp.API.Modules.Cvars;
 
 namespace DiscordStatus
 {
@@ -95,20 +98,21 @@ namespace DiscordStatus
             try
             {
                 // Requer -enablefakeip na linha de comando do servidor
-                uint rawFakeIp = Server.FakeIp;
-                ushort fakePort = Server.FakeIpPort;
+                var sdrConVar = ConVar.Find("sdr_full_address");
+                string? sdrAddress = sdrConVar?.StringValue;
 
-                if (rawFakeIp != 0 && fakePort != 0)
+                if (!string.IsNullOrEmpty(sdrAddress) && sdrAddress != "0.0.0.0:0" && sdrAddress.Contains(':'))
                 {
-                    // Converte o uint do IP para o formato string "x.x.x.x"
-                    // Adicione "using System.Net;" no topo do arquivo se der erro
-                    _g.FakeIP = new System.Net.IPAddress(BitConverter.GetBytes(rawFakeIp)).ToString();
-                    _g.FakeIPPort = fakePort;
-                    DSLog.Log(1, $"SDR FakeIP detectado: {_g.FakeIP}:{_g.FakeIPPort}");
+                    // O ConVar sdr_full_address já vem no formato "ip:porta"
+                    DSLog.Log(1, $"SDR FakeIP detectado: {sdrAddress}");
+                    
+                    var parts = sdrAddress.Split(':');
+                    _g.FakeIP = parts[0];
+                    _g.FakeIPPort = ushort.TryParse(parts[1], out var port) ? port : (ushort)0;
                 }
                 else
                 {
-                    DSLog.Log(0, "Nenhum FakeIP detectado. O servidor foi iniciado com -enablefakeip? Usando IP público.");
+                    DSLog.Log(0, "Nenhum FakeIP (sdr_full_address) detectado. O servidor foi iniciado com -enablefakeip? Usando IP público.");
                     _g.FakeIP = null; // Garante que esteja nulo
                 }
             }

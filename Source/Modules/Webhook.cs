@@ -306,9 +306,10 @@ namespace DiscordStatus
             }
         }
 
-        public async Task SendServerOnlineMessageAsync(string connectUrl, string mapName) // connectUrl é o fallback PHP
+        public async Task SendServerOnlineMessageAsync(string connectUrl, string mapName)
         {
-            List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.ServerRestartWebhookURL);
+            // Esta linha estava com erro, mas será corrigida pela sua alteração no DSconfig.cs
+            List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.ServerRestartWebhookURL); 
             
             if (!webhookClients.Any())
             {
@@ -318,9 +319,9 @@ namespace DiscordStatus
 
             DSLog.Log(1, "Enviando mensagem de 'Servidor Online' para o Discord...");
 
-            // ### LÓGICA DE ESCOLHA DO IP ###
             string connectInfo;
-            if (!string.IsNullOrEmpty(_g.FakeIP) && _g.FakeIPPort != 0)
+            // Usamos os campos que definimos no Globals
+            if (!string.IsNullOrEmpty(_g.FakeIP) && _g.FakeIPPort != 0) 
             {
                 // Se o FakeIP foi detectado, usa ele.
                 connectInfo = $"```connect {_g.FakeIP}:{_g.FakeIPPort}```";
@@ -332,7 +333,6 @@ namespace DiscordStatus
                 connectInfo = $"```connect {_g.ServerIP}```";
                 DSLog.Log(1, "Usando IP Público para a mensagem de 'Servidor Online'.");
             }
-            // ### FIM DA LÓGICA ###
 
             foreach (var webhookClient in webhookClients)
             {
@@ -342,8 +342,7 @@ namespace DiscordStatus
                     .WithColor(new Color(0, 255, 0)) // Cor Verde
                     .WithTimestamp(DateTimeOffset.UtcNow);
                 
-                // Adiciona o campo "Servidor" com o bloco de código
-                builder.AddField("Servidor", connectInfo, false);
+                builder.AddField("Servidor", connectInfo, false); // Título "Servidor" como na sua imagem
 
                 try
                 {
