@@ -136,6 +136,7 @@ namespace DiscordStatus
 
             string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}```";
             builder.AddField("Servidor", connectInfo, false);
+            builder.AddField("Trocar Skin", "https://skin.cs2mix.com.br", false);
             return builder.Build();
         }
 
