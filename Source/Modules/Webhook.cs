@@ -262,7 +262,7 @@ namespace DiscordStatus
                 
                 // Adiciona link de demos
                 builder.AddField("Demos da Partida", "[Acessar Demos](http://137.131.134.232)", false);
-                builder.AddField("Trocar Skins", "[Altere suas skins](https://skin.cs2mix.com.br)", false);
+                builder.AddField("Trocar Skins", "[Altere suas skins](https://inventory.cstrike.app)", false);
 
 
                 if (_chores.IsURLValid(EConfig.MapImg))
