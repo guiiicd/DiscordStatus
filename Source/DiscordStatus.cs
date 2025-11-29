@@ -2,6 +2,8 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using System.Threading.Tasks;
 using System.Linq;
+using DiscordStatus.Utils;
+using System; // Necessário para Exception
 
 namespace DiscordStatus
 {
@@ -14,6 +16,12 @@ namespace DiscordStatus
         private readonly IChores _chores;
         private readonly Globals _g;
         private bool init = false;
+
+        // --- MODIFICAÇÃO (PARTE 2) ---
+        // Variável estática para acessar a API da Steam de qualquer lugar do plugin
+        public static SteamAPI? SteamApiHelper;
+        // -----------------------------
+
         public DSconfig Config { get; set; }
 
         public DiscordStatus(IWebhook webhook, IQuery query, IChores chores, Globals g)
@@ -28,6 +36,21 @@ namespace DiscordStatus
 
         public override async void Load(bool hotReload)
         {
+            // --- MODIFICAÇÃO (PARTE 2) ---
+            // Inicializa o Helper da Steam para capturar o SDR assim que o plugin carregar
+            try 
+            {
+                SteamApiHelper = new SteamAPI();
+                SteamApiHelper.Initialize();
+                // Usando DSLog para manter o padrão do seu plugin
+                DSLog.Log(1, "SteamAPI Helper initialized for SDR.");
+            }
+            catch (Exception ex)
+            {
+                DSLog.Log(2, $"Failed to initialize SteamAPI Helper: {ex.Message}");
+            }
+            // -----------------------------
+
             Server.NextFrame(() =>
             {
                 _g.MapName = Server.MapName;

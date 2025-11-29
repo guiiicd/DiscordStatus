@@ -25,6 +25,23 @@ namespace DiscordStatus
             _chores = chores;
         }
 
+        // --- MÉTODO NOVO (PARTE 3) ---
+        // Verifica se temos um ID SDR da Valve. Se sim, usa ele. Se não, usa o IP.
+        private string GetConnectCommand()
+        {
+            // Acessa a variável estática que criamos no passo anterior
+            string? sdrId = DiscordStatus.SteamApiHelper?.GetSdrConnectString();
+
+            if (!string.IsNullOrEmpty(sdrId))
+            {
+                return $"connect {sdrId}";
+            }
+
+            // Fallback para o IP clássico se o SDR não carregou
+            return $"connect {_g.ServerIP}";
+        }
+        // -----------------------------
+
         private List<DiscordWebhookClient> CreateWebhookClients(string url)
         {
             List<DiscordWebhookClient> clients = new();
@@ -134,7 +151,8 @@ namespace DiscordStatus
                 builder.AddField("Jogadores", "Nenhum jogador conectado.", false);
             }
 
-            string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}```";
+            // ATUALIZADO PARA USAR SDR
+            string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```{GetConnectCommand()}```";
             builder.AddField("Servidor", connectInfo, false);
             return builder.Build();
         }
@@ -153,7 +171,8 @@ namespace DiscordStatus
                 builder.AddField("Mapa Atual", $"`{_g.MapName}`", true);
                 builder.AddField("Jogadores", $"`{_g.PlayerList.Count}/{_g.MaxPlayers}`", true);
 
-                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}```";
+                // ATUALIZADO PARA USAR SDR
+                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```{GetConnectCommand()}```";
                 builder.AddField("Entre no Servidor", connectInfo, false);
 
                 string content = (WConfig.NotifyMembersRoleID != 0) ? $"<@&{WConfig.NotifyMembersRoleID}>" : "";
@@ -182,7 +201,9 @@ namespace DiscordStatus
                 }
                 
                 builder.AddField("Jogadores", $"`{counts}/{_g.MaxPlayers}`", false);
-                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}```";
+                
+                // ATUALIZADO PARA USAR SDR
+                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```{GetConnectCommand()}```";
                 builder.AddField("Junte-se a Nós!", connectInfo, false);
 
                 await webhookClient.SendMessageAsync(
@@ -192,40 +213,6 @@ namespace DiscordStatus
             }
         }
 
-        // public async Task GameEnd(string mvp, List<string> tplayersName, List<string> ctplayersName)
-        // {
-        //     List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.ScoreboardURL);
-        //     foreach (var webhookClient in webhookClients)
-        //     {
-        //         string tnames = !tplayersName.Any() ? "Nenhum jogador" : string.Join("\n", tplayersName);
-        //         string ctnames = !ctplayersName.Any() ? "Nenhum jogador" : string.Join("\n", ctplayersName);
-        //         string ctTeamName = string.IsNullOrEmpty(_g.CTName) ? "Contra-Terroristas" : _g.CTName;
-        //         string tTeamName = string.IsNullOrEmpty(_g.TName) ? "Terroristas" : _g.TName;
-
-        //         var builder = new EmbedBuilder()
-        //             .WithTitle($"Fim de Partida `{_g.MapName}`")
-        //             .WithDescription($"**Placar**\n {ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}")
-        //             .WithColor(_chores.GetEmbedColor())
-        //             .WithTimestamp(DateTimeOffset.UtcNow);
-
-        //         builder.AddField("👑 MVP da Partida", mvp, false);
-        //         builder.AddField(ctTeamName, ctnames, true);
-        //         builder.AddField(tTeamName, tnames, true);
-
-        //         string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}````";
-        //         builder.AddField("Servidor", connectInfo, false);
-
-        //         if (_chores.IsURLValid(EConfig.MapImg))
-        //         {
-        //             builder.WithImageUrl(EConfig.MapImg.Replace("{MAPNAME}", _g.MapName));
-        //         }
-
-        //         await webhookClient.SendMessageAsync(
-        //             embeds: new[] { builder.Build() },
-        //             username: WebhookUsername,
-        //             avatarUrl: WebhookAvatarUrl);
-        //     }
-        // }
         public async Task GameEnd(string mvp, List<string> tplayersName, List<string> ctplayersName)
         {
             List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.ScoreboardURL);
@@ -257,7 +244,8 @@ namespace DiscordStatus
                 builder.AddField($"{ctTeamName}", ctnames, false);
                 builder.AddField($"{tTeamName}", tnames, false);
 
-                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```connect {_g.ServerIP}```";
+                // ATUALIZADO PARA USAR SDR
+                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```{GetConnectCommand()}```";
                 builder.AddField("Servidor", connectInfo, false);
                 
                 // Adiciona link de demos
@@ -276,7 +264,6 @@ namespace DiscordStatus
                     avatarUrl: WebhookAvatarUrl);
             }
         }
-
 
         public async Task ServerOffiline()
         {
