@@ -115,14 +115,29 @@ namespace DiscordStatus
         {
             DSLog.Log(0, "Starting~");
             _g.ConnectURL = _chores.IsURLValid(_g.GConfig.PHPURL) ? string.Concat(_g.GConfig.PHPURL, $"?ip={_g.ServerIP}") : "ConnectURL Error";
+            
+            // Envia a mensagem inicial (ainda com IP normal, pois o SDR não carregou)
             await _webhook.InitialMessageAsync();
+            
             if (_g.MessageID != 0)
             {
                 // Timer de atualização periódica desativado conforme solicitado
-                // _update = new System.Timers.Timer(TimeSpan.FromSeconds(_g.GConfig.UpdateInterval).TotalMilliseconds);
-                // _update.Elapsed += async (sender, e) => await UpdateAsync();
-                // _update.Start();
+                /*
+                _update = new System.Timers.Timer(TimeSpan.FromSeconds(_g.GConfig.UpdateInterval).TotalMilliseconds);
+                _update.Elapsed += async (sender, e) => await UpdateAsync();
+                _update.Start();
+                */
                 DSLog.Log(1, "Initialization completed successfully! (Periodic updates disabled)");
+
+                // --- NOVO CÓDIGO ---
+                // Agenda uma atualização única após 30 segundos para capturar o SDR ID
+                // O SDR leva cerca de 5-10 segundos para autenticar com a Steam.
+                AddTimer(30.0f, () =>
+                {
+                    DSLog.Log(1, "Executando atualização tardia para capturar SDR ID...");
+                    Task.Run(async () => await UpdateAsync());
+                });
+                // -------------------
             }
         }
 
