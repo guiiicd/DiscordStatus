@@ -116,28 +116,26 @@ namespace DiscordStatus
             DSLog.Log(0, "Starting~");
             _g.ConnectURL = _chores.IsURLValid(_g.GConfig.PHPURL) ? string.Concat(_g.GConfig.PHPURL, $"?ip={_g.ServerIP}") : "ConnectURL Error";
             
-            // Envia a mensagem inicial (ainda com IP normal, pois o SDR não carregou)
+            // Envia a mensagem inicial
             await _webhook.InitialMessageAsync();
             
             if (_g.MessageID != 0)
             {
-                // Timer de atualização periódica desativado conforme solicitado
-                /*
-                _update = new System.Timers.Timer(TimeSpan.FromSeconds(_g.GConfig.UpdateInterval).TotalMilliseconds);
-                _update.Elapsed += async (sender, e) => await UpdateAsync();
-                _update.Start();
-                */
                 DSLog.Log(1, "Initialization completed successfully! (Periodic updates disabled)");
 
-                // --- NOVO CÓDIGO ---
-                // Agenda uma atualização única após 30 segundos para capturar o SDR ID
-                // O SDR leva cerca de 5-10 segundos para autenticar com a Steam.
-                AddTimer(30.0f, () =>
+                // --- CORREÇÃO DO TIMER ---
+                // Agora usamos Server.NextFrame dentro do Timer para garantir que
+                // o UpdateAsync rode na Thread Principal do jogo, evitando o erro "non-main thread".
+                AddTimer(120.0f, () =>
                 {
-                    DSLog.Log(1, "Executando atualização tardia para capturar SDR ID...");
-                    Task.Run(async () => await UpdateAsync());
+                    Server.NextFrame(() =>
+                    {
+                        DSLog.Log(1, "Timer disparado: Atualizando Embed com IP SDR...");
+                        // Chamamos o UpdateAsync sem Task.Run externo, pois ele já é async
+                        _ = UpdateAsync();
+                    });
                 });
-                // -------------------
+                // -------------------------
             }
         }
 
