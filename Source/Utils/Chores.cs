@@ -110,7 +110,7 @@ namespace DiscordStatus
                 Task.Run(async () => playerInfo.Region = await _query.IPQueryAsync(playerInfo.IpAddress ?? "", "region_code").ConfigureAwait(false) ?? string.Empty);
             }
             // A chamada para buscar o país foi removida.
-            _g.PlayerList[player.Slot] = playerInfo;
+            _g.PlayerList[player!.Slot] = playerInfo;
         }
 
         public bool IsPlayerValid(CCSPlayerController? player)

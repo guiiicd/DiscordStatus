@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -53,7 +53,6 @@ namespace DiscordStatus
                 globals.WConfig = configData.WebhookConfig;
                 globals.EConfig = configData.EmbedConfig;
                 globals.ServerIP = configData.GeneralConfig.ServerIP;
-                globals.MessageID = configData.WebhookConfig.StatusMessageID;
                 globals.NameFormat = configData.EmbedConfig.NameFormat;
                 globals.ConnectURL = string.Concat(configData.GeneralConfig.PHPURL, $"?ip={globals.ServerIP}");
                 globals.HasCC = configData.EmbedConfig.NameFormat.Contains("{CC}") || configData.EmbedConfig.NameFormat.Contains("{FLAG}");

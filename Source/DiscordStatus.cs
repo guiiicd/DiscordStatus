@@ -77,8 +77,6 @@ namespace DiscordStatus
 
         public override void Unload(bool hotReload)
         {
-            _update?.Stop();
-            _update?.Dispose();
             DSLog.Log(2, $"{ModuleName} version {ModuleVersion} unloaded");
         }
 
