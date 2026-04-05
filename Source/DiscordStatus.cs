@@ -110,7 +110,6 @@ namespace DiscordStatus
         private async Task LoadDiscordStatusAsync()
         {
             DSLog.Log(0, "Starting~");
-            _g.ConnectURL = _chores.IsURLValid(_g.GConfig.PHPURL) ? string.Concat(_g.GConfig.PHPURL, $"?ip={_g.ServerIP}") : "ConnectURL Error";
             DSLog.Log(1, "Initialization completed successfully! (Periodic updates and status embed disabled by architecture)");
             await Task.CompletedTask; // dummy await para manter a task
         }
