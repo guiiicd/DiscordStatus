@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Webhook;
 using System;
 using System.Collections.Generic;
@@ -9,10 +9,6 @@ namespace DiscordStatus
 {
     public class Webhook : IWebhook
     {
-        // NOME E AVATAR FIXOS PARA TODOS OS WEBHOOKS
-        private const string WebhookUsername = "THE OWLS - PLACAR";
-        private const string WebhookAvatarUrl = "https://images-ext-1.discordapp.net/external/4Tw6wzN5XaaCGxEd2Sbukw3yql9LLTMr3t3KcXjdSz0/%3Fsize%3D2048/https/cdn.discordapp.com/avatars/1379614604048470026/56c3370ef900262b2140813227713fb7.png?format=webp&quality=lossless";
-
         private readonly IChores _chores;
         private readonly Globals _g;
         private WebhookConfig WConfig => _g.WConfig;
@@ -62,101 +58,6 @@ namespace DiscordStatus
             return clients;
         }
 
-        public async Task InitialMessageAsync()
-        {
-            DSLog.Log(0, "Initializing Embed");
-            try
-            {
-                List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.StatusWebhookURL);
-                foreach (var webhookClient in webhookClients)
-                {
-                    if (WConfig.StatusMessageID == 0)
-                    {
-                        DSLog.Log(2, "MessageID is not set, creating a new one.");
-                        ulong messageId = await webhookClient.SendMessageAsync(
-                            embeds: new[] { CreateStatusEmbed() },
-                            username: WebhookUsername,
-                            avatarUrl: WebhookAvatarUrl);
-                        _g.MessageID = messageId;
-                        await ConfigManager.SaveAsync("WebhookConfig", "StatusMessageID", _g.MessageID);
-                    }
-                    else
-                    {
-                        _g.MessageID = WConfig.StatusMessageID;
-                        await webhookClient.ModifyMessageAsync(_g.MessageID, props =>
-                        {
-                            props.Embeds = new[] { CreateStatusEmbed() };
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                DSLog.Log(2, $"Failed Initializing: {ex}");
-            }
-        }
-
-        public async Task UpdateEmbed()
-        {
-            try
-            {
-                List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.StatusWebhookURL);
-                foreach (var webhookClient in webhookClients)
-                {
-                    await webhookClient.ModifyMessageAsync(_g.MessageID, props =>
-                    {
-                        props.Embeds = new[] { CreateStatusEmbed() };
-                    });
-                }
-                DSLog.Log(1, "Embed updated successfully!");
-            }
-            catch (Exception ex)
-            {
-                DSLog.Log(2, $"Error updating embed: {ex.Message}");
-            }
-        }
-
-        public Embed CreateStatusEmbed()
-        {
-            string ctTeamName = string.IsNullOrEmpty(_g.CTName) ? "Contra-Terroristas" : _g.CTName;
-            string tTeamName = string.IsNullOrEmpty(_g.TName) ? "Terroristas" : _g.TName;
-
-            var builder = new EmbedBuilder()
-                .WithTitle("STATUS DO SERVIDOR")
-                .WithColor(_chores.GetEmbedColor())
-                .WithTimestamp(DateTimeOffset.UtcNow);
-
-            string imageUrl = EConfig.MapImg.Replace("{MAPNAME}", _g.MapName);
-            if (!_g.PlayerList.Any() && _chores.IsURLValid(EConfig.IdleImg))
-            {
-                imageUrl = EConfig.IdleImg;
-            }
-            if (_chores.IsURLValid(imageUrl))
-            {
-                builder.WithImageUrl(imageUrl);
-            }
-
-            if (_g.PlayerList.Any())
-            {
-                string tnames = !_g.TPlayersName.Any() ? "Nenhum jogador" : string.Join("\n", _g.TPlayersName);
-                string ctnames = !_g.CtPlayersName.Any() ? "Nenhum jogador" : string.Join("\n", _g.CtPlayersName);
-                builder.WithDescription($"**Mapa:** `{_g.MapName}`\n**Placar:** {ctTeamName} **{_g.CTScore}** vs **{_g.TScore}** {tTeamName}");
-                builder.AddField(ctTeamName, ctnames, true);
-                builder.AddField(tTeamName, tnames, true);
-                builder.AddField("\u200B", "\u200B", false);
-            }
-            else
-            {
-                builder.WithDescription($"**Mapa:** `{_g.MapName}`\n");
-                builder.AddField("Jogadores", "Nenhum jogador conectado.", false);
-            }
-
-            // ATUALIZADO PARA USAR SDR
-            string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```{GetConnectCommand()}```";
-            builder.AddField("Servidor", connectInfo, false);
-            return builder.Build();
-        }
-
         public async Task RequestPlayers(string name)
         {
             List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.RequestPlayersURL);
@@ -179,37 +80,8 @@ namespace DiscordStatus
                 await webhookClient.SendMessageAsync(
                     text: content,
                     embeds: new[] { builder.Build() },
-                    username: WebhookUsername,
-                    avatarUrl: WebhookAvatarUrl);
-            }
-        }
-
-        public async Task NewMap(string mapname, int counts)
-        {
-            List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.NotifyWebhookURL);
-            foreach (var webhookClient in webhookClients)
-            {
-                var builder = new EmbedBuilder()
-                    .WithTitle("🗺️ MUDANÇA DE MAPA")
-                    .WithDescription($"O mapa foi alterado para `{mapname}`.")
-                    .WithColor(_chores.GetEmbedColor())
-                    .WithTimestamp(DateTimeOffset.UtcNow);
-
-                if (_chores.IsURLValid(EConfig.MapImg))
-                {
-                    builder.WithImageUrl(EConfig.MapImg.Replace("{MAPNAME}", mapname));
-                }
-                
-                builder.AddField("Jogadores", $"`{counts}/{_g.MaxPlayers}`", false);
-                
-                // ATUALIZADO PARA USAR SDR
-                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```{GetConnectCommand()}```";
-                builder.AddField("Junte-se a Nós!", connectInfo, false);
-
-                await webhookClient.SendMessageAsync(
-                    embeds: new[] { builder.Build() },
-                    username: WebhookUsername,
-                    avatarUrl: WebhookAvatarUrl);
+                    username: EConfig.WebhookUsername,
+                    avatarUrl: EConfig.WebhookAvatarUrl);
             }
         }
 
@@ -248,10 +120,16 @@ namespace DiscordStatus
                 string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```{GetConnectCommand()}```";
                 builder.AddField("Servidor", connectInfo, false);
                 
-                // Adiciona link de demos
-                builder.AddField("Demos da Partida", "[Acessar Demos](http://137.131.134.232)", false);
-                builder.AddField("Trocar Skins", "[Altere suas skins](https://inventory.cstrike.app)", false);
-
+                // Adiciona link de demos referenciando a Config
+                if (_chores.IsURLValid(EConfig.DemosUrl)) 
+                {
+                    builder.AddField("Demos da Partida", $"[Acessar Demos]({EConfig.DemosUrl})", false);
+                }
+                
+                if (_chores.IsURLValid(EConfig.SkinsUrl)) 
+                {
+                    builder.AddField("Trocar Skins", $"[Altere suas skins]({EConfig.SkinsUrl})", false);
+                }
 
                 if (_chores.IsURLValid(EConfig.MapImg))
                 {
@@ -260,38 +138,8 @@ namespace DiscordStatus
 
                 await webhookClient.SendMessageAsync(
                     embeds: new[] { builder.Build() },
-                    username: WebhookUsername,
-                    avatarUrl: WebhookAvatarUrl);
-            }
-        }
-
-        public async Task ServerOffiline()
-        {
-            try
-            {
-                List<DiscordWebhookClient> webhookClients = CreateWebhookClients(WConfig.StatusWebhookURL);
-                foreach (var webhookClient in webhookClients)
-                {
-                    var builder = new EmbedBuilder()
-                        .WithTitle("STATUS DO SERVIDOR")
-                        .WithDescription("🔴 **O servidor está offline.**")
-                        .WithColor(new Color(220, 20, 60)) // Crimson Red
-                        .WithTimestamp(DateTimeOffset.UtcNow);
-
-                    if (_chores.IsURLValid(EConfig.OfflineImg))
-                    {
-                        builder.WithImageUrl(EConfig.OfflineImg);
-                    }
-
-                    await webhookClient.ModifyMessageAsync(_g.MessageID, props =>
-                    {
-                        props.Embeds = new[] { builder.Build() };
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                DSLog.Log(2, $"Error setting server to offline: {ex.Message}");
+                    username: EConfig.WebhookUsername,
+                    avatarUrl: EConfig.WebhookAvatarUrl);
             }
         }
     }

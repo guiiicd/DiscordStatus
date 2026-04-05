@@ -1,4 +1,4 @@
-﻿using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core;
 using Discord;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -7,13 +7,8 @@ namespace DiscordStatus
 {
     public interface IWebhook
     {
-        Task InitialMessageAsync();
-        Embed CreateStatusEmbed();
-        Task ServerOffiline();
-        Task UpdateEmbed();
         Task RequestPlayers(string name);
         Task GameEnd(string mvp, List<string> tPlayers, List<string> ctPlayers);
-        Task NewMap(string mapname, int playercounts);
     }
 
     public interface IQuery

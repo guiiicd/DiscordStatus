@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using CounterStrikeSharp.API.Core;
@@ -126,8 +126,6 @@ namespace DiscordStatus
 
         public void SortPlayers()
         {
-            _g.TPlayersName.Clear();
-            _g.CtPlayersName.Clear();
             _g.PlayerList = _g.PlayerList.OrderByDescending(x => x.Value.Kills).ToDictionary(x => x.Key, x => x.Value);
         }
 

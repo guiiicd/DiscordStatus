@@ -1,4 +1,4 @@
-﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
@@ -30,25 +30,6 @@ namespace DiscordStatus
             //RegisterEventHandler<EventGameNewmap>(OnGameNewmap); somehow this doesnt work
         }
 
-        // private void OnMapStart(string mapName)
-        // {
-        //     if (!init)
-        //     {
-        //         DSLog.Log(1, $"Map {mapName} started!");
-        //         _g.MapName = mapName;
-        //         _g.MaxPlayers = Server.MaxPlayers;
-        //         Task.Run(LoadDiscordStatusAsync);
-        //         init = true;
-        //     }
-        //     else
-        //     {
-        //         DSLog.Log(1, $"Map {_g.MapName} changed to {mapName}!");
-        //         if (!_g.WConfig.NewMapNotification) return;
-        //         var playercounts = Utilities.GetPlayers().Where(_chores.IsPlayerValid).Count();
-        //         _webhook.NewMap(mapName, playercounts);
-        //         _g.MapName = mapName;
-        //     }
-        // }
         private void OnMapStart(string eventMapName)
         {
             var currentMapName = Server.MapName;
@@ -71,9 +52,6 @@ namespace DiscordStatus
             {
                 DSLog.Log(1, $"Map changed from {_g.MapName} to {currentMapName}!");
                 _g.MapName = currentMapName;
-                if (!_g.WConfig.NewMapNotification) return;
-                var playercounts = Utilities.GetPlayers().Where(_chores.IsPlayerValid).Count();
-                _webhook.NewMap(currentMapName, playercounts);
             }
         }
 

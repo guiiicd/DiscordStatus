@@ -9,9 +9,8 @@ namespace DiscordStatus
 {
     public partial class DiscordStatus : BasePlugin, IPluginConfig<DSconfig>
     {
-        private System.Timers.Timer? _update;
-
         private readonly IWebhook _webhook;
+
         private readonly IQuery _query;
         private readonly IChores _chores;
         private readonly Globals _g;
@@ -78,7 +77,6 @@ namespace DiscordStatus
 
         public override void Unload(bool hotReload)
         {
-            _webhook.ServerOffiline();
             _update?.Stop();
             _update?.Dispose();
             DSLog.Log(2, $"{ModuleName} version {ModuleVersion} unloaded");
@@ -115,65 +113,8 @@ namespace DiscordStatus
         {
             DSLog.Log(0, "Starting~");
             _g.ConnectURL = _chores.IsURLValid(_g.GConfig.PHPURL) ? string.Concat(_g.GConfig.PHPURL, $"?ip={_g.ServerIP}") : "ConnectURL Error";
-            
-            // Envia a mensagem inicial
-            await _webhook.InitialMessageAsync();
-            
-            if (_g.MessageID != 0)
-            {
-                DSLog.Log(1, "Initialization completed successfully! (Periodic updates disabled)");
-
-                // --- CORREÇÃO DO TIMER ---
-                // Agora usamos Server.NextFrame dentro do Timer para garantir que
-                // o UpdateAsync rode na Thread Principal do jogo, evitando o erro "non-main thread".
-                AddTimer(120.0f, () =>
-                {
-                    Server.NextFrame(() =>
-                    {
-                        DSLog.Log(1, "Timer disparado: Atualizando Embed com IP SDR...");
-                        // Chamamos o UpdateAsync sem Task.Run externo, pois ele já é async
-                        _ = UpdateAsync();
-                    });
-                });
-                // -------------------------
-            }
-        }
-
-        public async Task UpdateAsync()
-        {
-            await Task.Run(() =>
-            {
-                Server.NextFrame(() =>
-                {
-                    _g.MapName = Server.MapName;
-
-                    var _players = Utilities.GetPlayers().Where(p => _chores.IsPlayerValid(p));
-                    foreach (var player in _players)
-                    {
-                        _chores.UpdatePlayer(player);
-                    }
-
-                    var players = _g.PlayerList;
-
-                    if (players.Count > 0)
-                    {
-                        _chores.SortPlayers();
-
-                        var tPlayerList = players
-                            .Where(kv => kv.Value != null && kv.Value.TeamID == 2)
-                            .Select(kv => _chores.FormatStats(kv.Value));
-
-                        var ctPlayerList = players
-                            .Where(kv => kv.Value != null && kv.Value.TeamID == 3)
-                            .Select(kv => _chores.FormatStats(kv.Value));
-
-                        _g.TPlayersName.AddRange(tPlayerList);
-                        _g.CtPlayersName.AddRange(ctPlayerList);
-                    }
-                });
-            });
-
-            await _webhook.UpdateEmbed();
+            DSLog.Log(1, "Initialization completed successfully! (Periodic updates and status embed disabled by architecture)");
+            await Task.CompletedTask; // dummy await para manter a task
         }
     }
 }
