@@ -54,7 +54,6 @@ namespace DiscordStatus
                 globals.EConfig = configData.EmbedConfig;
                 globals.ServerIP = configData.GeneralConfig.ServerIP;
                 globals.NameFormat = configData.EmbedConfig.NameFormat;
-                globals.ConnectURL = string.Concat(configData.GeneralConfig.PHPURL, $"?ip={globals.ServerIP}");
                 globals.HasCC = configData.EmbedConfig.NameFormat.Contains("{CC}") || configData.EmbedConfig.NameFormat.Contains("{FLAG}");
                 globals.HasRC = configData.EmbedConfig.NameFormat.Contains("{RC}");
                 DSLog.Log(1, "Read configuration data successfully.");

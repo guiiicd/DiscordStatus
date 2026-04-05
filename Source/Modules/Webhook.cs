@@ -25,7 +25,7 @@ namespace DiscordStatus
         // Verifica se temos um ID SDR da Valve. Se sim, usa ele. Se não, usa o IP.
         private string GetConnectCommand()
         {
-            // Acessa a variável estática que criamos no passo anterior
+            // Acessa a variável estática
             string? sdrId = DiscordStatus.SteamApiHelper?.GetSdrConnectString();
 
             if (!string.IsNullOrEmpty(sdrId))
@@ -33,8 +33,8 @@ namespace DiscordStatus
                 return $"connect {sdrId}";
             }
 
-            // Fallback para o IP clássico se o SDR não carregou
-            return $"connect {_g.ServerIP}";
+            // Fallback para o IP usando string base (o usuário já pode ter colocado 'connect ')
+            return $"{_g.ServerIP}";
         }
         // -----------------------------
 
@@ -72,8 +72,8 @@ namespace DiscordStatus
                 builder.AddField("Mapa Atual", $"`{_g.MapName}`", true);
                 builder.AddField("Jogadores", $"`{_g.PlayerList.Count}/{_g.MaxPlayers}`", true);
 
-                // ATUALIZADO PARA USAR SDR
-                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```{GetConnectCommand()}```";
+                // ATUALIZADO PARA USAR SDR SEM O CONCAT DE PHP
+                string connectInfo = $"```{GetConnectCommand()}```";
                 builder.AddField("Entre no Servidor", connectInfo, false);
 
                 string content = (WConfig.NotifyMembersRoleID != 0) ? $"<@&{WConfig.NotifyMembersRoleID}>" : "";
@@ -116,24 +116,19 @@ namespace DiscordStatus
                 builder.AddField($"{ctTeamName}", ctnames, false);
                 builder.AddField($"{tTeamName}", tnames, false);
 
-                // ATUALIZADO PARA USAR SDR
-                string connectInfo = _chores.IsURLValid(GConfig.PHPURL) ? $"[Conectar via Steam]({_g.ConnectURL})" : $"```{GetConnectCommand()}```";
+                // ATUALIZADO PARA USAR SDR SEM O CONCAT DE PHP
+                string connectInfo = $"```{GetConnectCommand()}```";
                 builder.AddField("Servidor", connectInfo, false);
                 
                 // Adiciona link de demos referenciando a Config
-                if (_chores.IsURLValid(EConfig.DemosUrl)) 
+                if (!string.IsNullOrWhiteSpace(EConfig.DemosUrl) && _chores.IsURLValid(EConfig.DemosUrl)) 
                 {
                     builder.AddField("Demos da Partida", $"[Acessar Demos]({EConfig.DemosUrl})", false);
                 }
                 
-                if (_chores.IsURLValid(EConfig.SkinsUrl)) 
+                if (!string.IsNullOrWhiteSpace(EConfig.SkinsUrl) && _chores.IsURLValid(EConfig.SkinsUrl)) 
                 {
                     builder.AddField("Trocar Skins", $"[Altere suas skins]({EConfig.SkinsUrl})", false);
-                }
-
-                if (_chores.IsURLValid(EConfig.MapImg))
-                {
-                    builder.WithImageUrl(EConfig.MapImg.Replace("{MAPNAME}", _g.MapName));
                 }
 
                 await webhookClient.SendMessageAsync(
